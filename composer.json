@@ -1,0 +1,13 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Core\\": "src/Core/",
+      "App\\Controllers\\": "src/Controllers/",
+      "App\\Models\\": "src/Models/"
+    }
+  },
+  "require": {
+    "phpmailer/phpmailer": "^6.9",
+    "nikic/fast-route": "^1.3"
+  }
+}
