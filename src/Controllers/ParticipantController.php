@@ -13,24 +13,36 @@ class ParticipantController {
     }
     public function dashboard() {
         session_start();
-
+    
         // Check if the user is logged in and is a participant
         if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'participant') {
             header("Location: /login");
             exit();
         }
-
+    
         $userId = $_SESSION['user_id'];
-
+    
         // Create an instance of the TripParticipant model
         $tripParticipantModel = new TripParticipant();
         
         // Get all trips for the participant
         $trips = $tripParticipantModel->getAllTripsForParticipant($userId);
-
-        // Pass trips data to the view
-        $data = ['trips' => $trips];
-
+    
+        // Check for upcoming trips within the next 7 days
+        $upcomingTrips = [];
+        $today = new \DateTime();  // Use the global DateTime class
+        $interval = new \DateInterval('P7D'); // 7 days
+    
+        foreach ($trips as $trip) {
+            $startDate = new \DateTime($trip['start_date']);  // Use global DateTime class
+            if ($today->diff($startDate)->days <= 7 && $today <= $startDate) {
+                $upcomingTrips[] = $trip; // Add to upcoming trips array
+            }
+        }
+    
+        // Pass trips and upcoming trips data to the view
+        $data = ['trips' => $trips, 'upcomingTrips' => $upcomingTrips];
+    
         // Load the participant dashboard view
         $viewPath = __DIR__ . '/../../resources/views/participant/dashboard.php';
         if (file_exists($viewPath)) {
@@ -39,6 +51,9 @@ class ParticipantController {
             echo "Participant dashboard view not found!";
         }
     }
+    
+    
+    
 
     // 📌 Update Status - Accept or Decline a Trip
     public function updateStatus()

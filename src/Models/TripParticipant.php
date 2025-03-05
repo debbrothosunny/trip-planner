@@ -48,69 +48,25 @@ class TripParticipant {
 
     public function getTripDetails($tripId) {
         try {
-            // Fetch all data in one query using JOINs or multiple queries in a single function
-            $query = "
-                SELECT
-                    trip_itineraries.*,
-                    accommodations.*,
-                    transportation.*,
-                    trip_expenses.*
-                FROM trip_itineraries
-                LEFT JOIN accommodations ON accommodations.trip_id = trip_itineraries.trip_id
-                LEFT JOIN transportation ON transportation.trip_id = trip_itineraries.trip_id
-                LEFT JOIN trip_expenses ON trip_expenses.trip_id = trip_itineraries.trip_id
-                WHERE trip_itineraries.trip_id = :trip_id
-                ORDER BY trip_itineraries.itinerary_date ASC, trip_expenses.expense_date ASC
-            ";
-            $stmt = $this->db->prepare($query);
+            // Fetch itinerary separately
+            $stmt = $this->db->prepare("SELECT * FROM trip_itineraries WHERE trip_id = :trip_id ORDER BY itinerary_date ASC");
             $stmt->execute([':trip_id' => $tripId]);
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $itinerary = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-            // Organize the fetched data into the required format
-            $itinerary = [];
-            $accommodations = [];
-            $transportation = [];
-            $expenses = [];
+            // Fetch accommodations separately
+            $stmt = $this->db->prepare("SELECT * FROM accommodations WHERE trip_id = :trip_id");
+            $stmt->execute([':trip_id' => $tripId]);
+            $accommodations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-            // Split the result into respective arrays (this will depend on how the data is returned)
-            foreach ($result as $row) {
-                // Itinerary data
-                $itinerary[] = [
-                    'day_title' => $row['day_title'],
-                    'description' => $row['description'],
-                    'itinerary_date' => $row['itinerary_date']
-                   
-                ];
+            // Fetch transportation separately
+            $stmt = $this->db->prepare("SELECT * FROM transportation WHERE trip_id = :trip_id");
+            $stmt->execute([':trip_id' => $tripId]);
+            $transportation = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-                // Accommodations data
-                $accommodations[] = [
-                    'name' => $row['name'],
-                    'location' => $row['location'],
-                    'check_in_time' => $row['check_in_time'],
-                    'check_out_time' => $row['check_out_time'],
-                    'price' => $row['price'],
-                ];
-    
-                // Transportation data
-                $transportation[] = [
-                    'type' => $row['type'],
-                    'company_name' => $row['company_name'],
-                    'departure_location' => $row['departure_location'],
-                    'arrival_location' => $row['arrival_location'],
-                    'departure_date' => isset($row['departure_date']) ? $row['departure_date'] : null,  // Ensure this key exists
-                    'arrival_date' => isset($row['arrival_date']) ? $row['arrival_date'] : null,  // Ensure this key exists
-                    'booking_reference' => $row['booking_reference'],
-                    'amount' => $row['amount'],
-                ];
-    
-                // Expenses data
-                $expenses[] = [
-                    'description' => $row['description'],
-                    'category' => $row['category'],
-                    'amount' => $row['amount'],
-                    'expense_date' => $row['expense_date']
-                ];
-            }
+            // Fetch expenses separately
+            $stmt = $this->db->prepare("SELECT * FROM trip_expenses WHERE trip_id = :trip_id ORDER BY expense_date ASC");
+            $stmt->execute([':trip_id' => $tripId]);
+            $expenses = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
             return [
                 'itinerary' => $itinerary,
@@ -122,6 +78,7 @@ class TripParticipant {
             return [];
         }
     }
+    
     
 
 }

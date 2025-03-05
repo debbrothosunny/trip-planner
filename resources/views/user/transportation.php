@@ -78,6 +78,7 @@
         <a href="/user/accommodation">Accommodation</a>
         <a href="/user/expense">Expense</a>
         <a href="/user/budget-view ">Budget Track</a>
+        <a href="/user/my_trip_participants">Trip Participant</a>
         <nav class="navbar">
             <form action="/logout" method="POST">
                 <button type="submit" class="btn btn-danger">Logout</button>

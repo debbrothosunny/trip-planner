@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard - Trips</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    
     <style>
         body {
             display: flex;
@@ -49,11 +50,11 @@
         <p>Welcome, <strong><?= htmlspecialchars($user_name ?? 'Guest'); ?></strong></p>
         
         <?php if (!$isNewUser): ?>
-            <a href="/user/dashboard">Trip</a>
-            <a href="/user/transportation">Transportation</a>
-            <a href="/user/accommodation">Accommodation</a>
-            <a href="/user/expense">Expense</a>
-            <a href="/user/budget-view">Budget Track</a>
+            <a href="/user/dashboard"><i class="fas fa-plane"></i>Trip</a>
+            <a href="/user/transportation"><i class="fas fa-bus"></i>Transportation</a>
+            <a href="/user/accommodation"><i class="fas fa-hotel"></i>Accommodation</a>
+            <a href="/user/expense"><i class="fas fa-wallet"></i>Expense</a>
+            <a href="/user/budget-view"><i class="fas fa-chart-line"></i>Budget Track</a>
             <a href="/user/my_trip_participants">Trip Participant</a>
         <?php else: ?>
             <p class="alert alert-info">Start by creating your first trip!</p>

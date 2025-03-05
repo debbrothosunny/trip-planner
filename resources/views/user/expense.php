@@ -8,189 +8,86 @@
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
-    <!-- SweetAlert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f0f2f5;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 250px;
-            background: #343a40;
+            background: #2c3e50;
             color: white;
             height: 100vh;
             position: fixed;
-            padding-top: 50px;
-            transition: width 0.3s;
+            padding-top: 20px;
         }
 
         .sidebar a {
             color: white;
-            display: block;
-            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            padding: 12px;
             text-decoration: none;
-            margin-bottom: 8px;
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: background 0.3s;
+            transition: 0.3s;
         }
 
-        .sidebar a:hover {
-            background: #495057;
+        .sidebar a i {
+            margin-right: 10px;
         }
 
-        .sidebar a.active {
-            background-color: #007bff;
+        .sidebar a:hover, .sidebar a.active {
+            background: #34495e;
         }
 
-        /* Content */
         .content {
             margin-left: 270px;
             padding: 20px;
-        }
-
-        .table thead {
-            background-color: #007bff;
-            color: white;
         }
 
         .table th, .table td {
             text-align: center;
         }
 
-        /* Add Expense Button (Moved to top-right) */
         .add-expense-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+            margin-bottom: 15px;
         }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 200px;
-            }
-
-            .content {
-                margin-left: 210px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-
-            .content {
-                margin-left: 0;
-            }
-
-            .add-expense-btn {
-                position: relative;
-                margin-top: 10px;
-            }
-        }
-
-        .container {
-        max-width: 1100px;
-        background: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        margin-top: 20px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-    }
-
-    .table th,
-    .table td {
-        vertical-align: middle;
-        text-align: center;
-    }
-
-    .btn-custom {
-        font-size: 14px;
-        padding: 5px 10px;
-    }
-
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        background: #343a40;
-        color: white;
-        padding: 20px;
-        position: fixed;
-    }
-
-    .sidebar a {
-        display: block;
-        color: white;
-        text-decoration: none;
-        padding: 10px;
-        margin-bottom: 10px;
-        background: #495057;
-        border-radius: 5px;
-        text-align: center;
-    }
-
-    .sidebar a:hover {
-        background: #6c757d;
-    }
-
-    .content {
-        margin-left: 270px;
-        padding: 20px;
-        width: 100%;
-    }
-    </style>
     </style>
 </head>
 
 <body>
-
-    <!-- Sidebar -->
     <div class="sidebar">
         <h4 class="text-center">Dashboard</h4>
-        <a href="/user/dashboard">Trip</a>
-        <a href="/user/transportation">Transportation</a>
-        <a href="/user/accommodation">Accommodation</a>
-        <a href="/user/expense" class="active">Expense</a>
-        <a href="/user/budget-view">Budget Track</a>
-        <nav class="navbar">
-            <form action="/logout" method="POST">
-                <button type="submit" class="btn btn-danger">Logout</button>
-            </form>
-        </nav>
+        <a href="/user/dashboard"> Trip</a>
+        <a href="/user/transportation"> Transportation</a>
+        <a href="/user/accommodation"> Accommodation</a>
+        <a href="/user/expense" class="active"> Expense</a>
+        <a href="/user/budget-view"> Budget Track</a>
+        <a href="/user/my_trip_participants">Trip Participant</a>
+        <form action="/logout" method="POST" class="text-center mt-3">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
     </div>
 
-    <!-- Main Content -->
     <div class="content">
-        <h1>Expenses for Trip</h1>
+        <h2 class="mb-3">Trip Expenses</h2>
 
-        <!-- Add Expense Button -->
         <a href="/user/expense/create" class="btn btn-primary add-expense-btn">
             <i class="fas fa-plus"></i> Add Expense
         </a>
 
         <?php if (!empty($expenses)): ?>
-            <?php $tripName = htmlspecialchars($expenses[0]['trip_name']); ?>
-            <h3>Expenses for <?php echo $tripName; ?></h3>
-
             <div class="card">
-                <div class="card-header bg-primary text-white">
-                    Trip Expenses List
+                <div class="card-header bg-primary text-white text-center">
+                    <h5>Expenses for <?php echo htmlspecialchars($expenses[0]['trip_name']); ?></h5>
                 </div>
                 <div class="card-body">
-                    <table class="table table-striped table-bordered">
-                        <thead>
+                    <table class="table table-striped">
+                        <thead class="bg-dark text-white">
                             <tr>
                                 <th>Category</th>
                                 <th>Amount</th>
@@ -212,8 +109,8 @@
                                     <a href="/user/expense/edit/<?php echo $expense['id']; ?>" class="btn btn-warning btn-sm">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="/user/expense/delete/<?php echo $expense['id']; ?>" method="GET" style="display:inline;">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this expense?');">
+                                    <form action="/user/expense/delete/<?php echo $expense['id']; ?>" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -225,15 +122,13 @@
                 </div>
             </div>
         <?php else: ?>
-            <div class="alert alert-warning">
+            <div class="alert alert-warning text-center">
                 No expenses found for this trip.
             </div>
         <?php endif; ?>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 
 </html>

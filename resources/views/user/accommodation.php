@@ -57,6 +57,7 @@ if (session_status() == PHP_SESSION_NONE) {
         <a href="/user/accommodation">Accommodation</a>
         <a href="/user/expense">Expense</a>
         <a href="/user/budget-view ">Budget Track</a>
+        <a href="/user/my_trip_participants">Trip Participant</a>
         <nav class="navbar">
             <form action="/logout" method="POST">
                 <button type="submit" class="btn btn-danger">Logout</button>
@@ -109,8 +110,11 @@ if (session_status() == PHP_SESSION_NONE) {
                         <td><?= htmlspecialchars($accommodation['location']); ?></td>
                         <td>$<?= number_format($accommodation['price'], 2); ?></td>
                         <td><?= htmlspecialchars($accommodation['amenities']); ?></td>
-                        <td><?= htmlspecialchars($accommodation['check_in_time']); ?></td>
-                        <td><?= htmlspecialchars($accommodation['check_out_time']); ?></td>
+                        <td><?= htmlspecialchars(date("Y-m-d h:i A", strtotime($accommodation['check_in_time']))); ?>
+                        </td>
+                        <td><?= htmlspecialchars(date("Y-m-d h:i A", strtotime($accommodation['check_out_time']))); ?>
+                        </td>
+
                         <td>
                             <a href="/user/accommodation/<?= $accommodation['id']; ?>/edit"
                                 class="btn btn-sm btn-warning">Edit</a>

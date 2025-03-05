@@ -8,109 +8,111 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet">
     <style>
-        body {
-            background: #f4f7fc;
-            font-family: 'Arial', sans-serif;
-            color: #333;
-        }
+    body {
+        background: #f4f7fc;
+        font-family: 'Arial', sans-serif;
+        color: #333;
+    }
 
-        .navbar {
-            background-color: #0056b3;
-            color: white;
-            padding: 10px 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+    .navbar {
+        background-color: #0056b3;
+        color: white;
+        padding: 10px 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 1.5rem;
-        }
+    .navbar-brand {
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
 
-        .logout-btn {
-            position: absolute;
-            right: 20px;
-            top: 12px;
-        }
+    .logout-btn {
+        position: absolute;
+        right: 20px;
+        top: 12px;
+    }
 
-        .container {
-            margin-top: 30px;
-        }
+    .container {
+        margin-top: 30px;
+    }
 
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            background-color: #fff;
-        }
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        background-color: #fff;
+    }
 
-        .card-header {
-            background-color: #007bff;
-            color: white;
-            font-size: 1.25rem;
-            font-weight: bold;
-            text-align: center;
-            border-radius: 12px 12px 0 0;
-            padding: 10px;
-        }
+    .card-header {
+        background-color: #007bff;
+        color: white;
+        font-size: 1.25rem;
+        font-weight: bold;
+        text-align: center;
+        border-radius: 12px 12px 0 0;
+        padding: 10px;
+    }
 
-        .table th {
-            background-color: #007bff;
-            color: white;
-            font-weight: bold;
-        }
+    .table th {
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+    }
 
-        .table-striped tbody tr:nth-child(odd) {
-            background-color: #f9f9f9;
-        }
+    .table-striped tbody tr:nth-child(odd) {
+        background-color: #f9f9f9;
+    }
 
-        .table-bordered td, .table-bordered th {
-            border: 1px solid #ddd;
-        }
+    .table-bordered td,
+    .table-bordered th {
+        border: 1px solid #ddd;
+    }
 
-        .btn-danger {
-            background-color: #dc3545;
-            border: none;
-        }
+    .btn-danger {
+        background-color: #dc3545;
+        border: none;
+    }
 
-        .btn-info {
-            background-color: #17a2b8;
-            border: none;
-        }
+    .btn-info {
+        background-color: #17a2b8;
+        border: none;
+    }
 
-        .btn-info:hover, .btn-danger:hover {
-            opacity: 0.85;
-        }
+    .btn-info:hover,
+    .btn-danger:hover {
+        opacity: 0.85;
+    }
 
-        .btn-sm {
-            font-size: 0.875rem;
-        }
+    .btn-sm {
+        font-size: 0.875rem;
+    }
 
-        .card-footer {
-            background-color: #f8f9fa;
-            text-align: center;
-            border-radius: 0 0 12px 12px;
-            padding: 10px;
-        }
+    .card-footer {
+        background-color: #f8f9fa;
+        text-align: center;
+        border-radius: 0 0 12px 12px;
+        padding: 10px;
+    }
 
-        .fw-bold {
-            font-weight: 600;
-        }
+    .fw-bold {
+        font-weight: 600;
+    }
 
-        .badge {
-            padding: 5px 10px;
-            font-size: 0.875rem;
-        }
+    .badge {
+        padding: 5px 10px;
+        font-size: 0.875rem;
+    }
 
-        .text-muted {
-            color: #aaa;
-        }
+    .text-muted {
+        color: #aaa;
+    }
 
-        .text-success {
-            color: #28a745;
-        }
+    .text-success {
+        color: #28a745;
+    }
 
-        .text-warning {
-            color: #ffc107;
-        }
+    .text-warning {
+        color: #ffc107;
+    }
     </style>
 </head>
 
@@ -178,13 +180,13 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header text-white" style="background-color: #007bff;">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white text-center fw-bold">
                 Trip Participants
             </div>
             <div class="card-body">
-                <table class="table table-bordered table-striped">
-                    <thead>
+                <table class="table table-bordered table-responsive">
+                    <thead class="thead-light">
                         <tr>
                             <th>Trip Name</th>
                             <th>Participants</th>
@@ -196,17 +198,16 @@
                             <td class="fw-bold"><?= htmlspecialchars($trip['name']) ?></td>
                             <td>
                                 <?php if (!empty($data['participants'][$trip['id']])): ?>
-                                <ul style="padding-left: 20px;">
+                                <div class="list-group">
                                     <?php foreach ($data['participants'][$trip['id']] as $participant): ?>
-                                    <li>
-                                        <span class="fw-semibold"><?= htmlspecialchars($participant['user_name']) ?></span>
-                                        - 
-                                        <span class="badge <?= $participant['status'] == 'Confirmed' ? 'bg-success' : 'bg-warning' ?>">
-                                            <?= htmlspecialchars($participant['status']) ?>
-                                        </span>
-                                    </li>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span
+                                            class="fw-semibold"><?= htmlspecialchars($participant['user_name']) ?></span>
+                                        <span
+                                            class="badge <?= $participant['status'] == 'Confirmed' ? 'bg-success' : 'bg-warning' ?>"><?= htmlspecialchars($participant['status']) ?></span>
+                                    </div>
                                     <?php endforeach; ?>
-                                </ul>
+                                </div>
                                 <?php else: ?>
                                 <span class="text-muted">No participants</span>
                                 <?php endif; ?>
@@ -217,6 +218,10 @@
                 </table>
             </div>
         </div>
+
+    </div>
+
+
 
     </div>
 
