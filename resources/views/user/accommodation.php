@@ -52,9 +52,6 @@ if (session_status() == PHP_SESSION_NONE) {
     <div class="sidebar">
         <h4>Dashboard</h4>
 
-
-
-
         <a href="/user/dashboard">Trip</a>
         <a href="/user/transportation">Transportation</a>
         <a href="/user/accommodation">Accommodation</a>

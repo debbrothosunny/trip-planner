@@ -33,12 +33,26 @@ class AdminController {
         $tripStmt = $this->db->query("SELECT id, name FROM trips");
         $trips = $tripStmt->fetchAll(PDO::FETCH_ASSOC);
     
+        // Fetch participants for each trip
+        $participants = [];
+        foreach ($trips as $trip) {
+            $tripId = $trip['id'];
+            $participantStmt = $this->db->prepare("SELECT users.id AS user_id, users.name AS user_name, trip_participants.status
+                                                  FROM trip_participants
+                                                  JOIN users ON trip_participants.user_id = users.id
+                                                  WHERE trip_participants.trip_id = :trip_id");
+            $participantStmt->bindParam(':trip_id', $tripId, PDO::PARAM_INT);
+            $participantStmt->execute();
+            $participants[$tripId] = $participantStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+    
         // Pass data to the view
         $data = [
             'total_users' => $analytics['total_users'],
             'total_trips' => $analytics['total_trips'],
             'users' => $users,
-            'trips' => $trips // Pass the 'name' column data here
+            'trips' => $trips,
+            'participants' => $participants // Pass the participants data here
         ];
     
         // Load the dashboard view
@@ -49,6 +63,7 @@ class AdminController {
             echo "Dashboard view not found!";
         }
     }
+    
 
 
 

@@ -20,7 +20,9 @@ use App\Controllers\BudgetController;
         $router->addRoute('GET', '/', [AuthController::class, 'showLoginForm']); // Shows login form
         $router->addRoute('POST', '/login', [AuthController::class, 'login']); // Handles login submission
 
-        
+        $router->addRoute('GET', '/forgot_password', [AuthController::class, 'forgotPassword']); // Show forgot password form
+        $router->addRoute('POST', '/forgot_password', [AuthController::class, 'handleForgotPassword']); // Handle form submission
+
     
 
     // Registration Routes
@@ -145,30 +147,24 @@ use App\Controllers\BudgetController;
     });
     
     
+    $router->addGroup('/user', function (RouteCollector $router) {
+        // Other routes inside /user group
+        $router->addRoute('GET', '/my_trip_participants', [UserController::class, 'myTripParticipants']);
+    });
 
 
     // Participant Routes
-
     $router->addGroup('/participant', function (RouteCollector $router) {
         // 📌 Dashboard - Show pending invitations & accepted trips
         $router->addRoute('GET', '/dashboard', [ParticipantController::class, 'dashboard']);
-    
-        // 📌 View trip details
-        $router->addRoute('GET', '/trip/{id}', [ParticipantController::class, 'viewTrip']);
-    
-        // 📌 Accept or Decline trip invitations
-        $router->addRoute('POST', '/trip/{id}/accept', [ParticipantController::class, 'acceptInvitation']);
-        $router->addRoute('POST', '/trip/{id}/decline', [ParticipantController::class, 'declineInvitation']);
-    
-        // 📌 View itinerary for a trip
-        $router->addRoute('GET', '/trip/{id}/itinerary', [ParticipantController::class, 'viewItinerary']);
-    
-        // 📌 Add personal notes for a trip
-        $router->addRoute('POST', '/trip/{id}/notes', [ParticipantController::class, 'addNotes']);
-    
-        // 📌 Add expenses for a trip
-        $router->addRoute('POST', '/trip/{id}/expenses', [ParticipantController::class, 'addExpenses']);
+
+        // 📌 Trip Details - Show details for a specific trip
+    $router->addRoute('GET', '/trip-details/{tripId}', [ParticipantController::class, 'viewTripDetails']);
+        
+        // 📌 Status Update - Accept/Decline trip
+        $router->addRoute('POST', '/update-status', [ParticipantController::class, 'updateStatus']);
     });
+
     
 
 

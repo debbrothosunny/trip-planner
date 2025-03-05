@@ -72,6 +72,63 @@ class UserController
         }
     }
 
+
+    public function myTripParticipants()
+    {
+        session_start();
+    
+        // Ensure user is logged in
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'user') {
+            header("Location: /login");
+            exit();
+        }
+    
+        $user_id = $_SESSION['user']['id'];
+    
+        // Ensure database connection exists
+        if (!$this->pdo) {
+            die("Database connection is not initialized.");
+        }
+    
+        // Fetch trips where the logged-in user (Purna) is the creator (creator_id or similar)
+        $stmt = $this->pdo->prepare("
+        SELECT trips.id AS trip_id, trips.name AS trip_name
+        FROM trips
+        WHERE trips.user_id = :user_id
+        ");
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $trips = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+        // Fetch participants for each trip that Purna created, including the email
+        $participants = [];
+        foreach ($trips as $trip) {
+            $trip_id = $trip['trip_id'];
+            $stmt = $this->pdo->prepare("
+                SELECT users.id AS user_id, users.name AS user_name, users.email AS user_email, trip_participants.status
+                FROM trip_participants
+                JOIN users ON trip_participants.user_id = users.id
+                WHERE trip_participants.trip_id = :trip_id
+            ");
+            $stmt->bindParam(':trip_id', $trip_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $participants[$trip_id] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+    
+        // Load the view
+        $participantsViewPath = __DIR__ . '/../../resources/views/user/my_trip_participants.php';
+        if (file_exists($participantsViewPath)) {
+            include $participantsViewPath;
+        } else {
+            echo "Trip participants view not found!";
+        }
+    }
+    
+    
+    
+    
+
+
     
     
     

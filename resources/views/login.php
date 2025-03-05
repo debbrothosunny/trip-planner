@@ -7,7 +7,6 @@
     <title>Login</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-
 </head>
 
 <body class="bg-light">
@@ -24,8 +23,15 @@
                     <label for="password" class="form-label">Password</label>
                     <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Login</button>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </div>
             </form>
+
+            <!-- <div class="mt-3 text-center">
+                <a href="/forgot_password">Forgot Password?</a>
+            </div> -->
+
             <p class="mt-3 text-center">Don't have an account? <a href="/register">Register here</a></p>
         </div>
     </div>

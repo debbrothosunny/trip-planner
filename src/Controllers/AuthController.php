@@ -185,7 +185,7 @@ class AuthController {
     
     
 
-    
+      
 
 
     public function verifyOtp()
@@ -310,6 +310,144 @@ class AuthController {
         // Redirect to login page or home page after logout
         header('Location: /');
         exit();
+    }
+
+
+
+    // ✅ 1. Forgot Password Request
+    public function forgotPassword() {
+        // Define the correct view path
+        $viewPath = __DIR__ . '/../../resources/views/forgot_password.php';
+    
+        // Check if the file exists before including it
+        if (file_exists($viewPath)) {
+            require_once $viewPath;
+        } else {
+            echo "View file not found: " . $viewPath;
+        }
+    }
+    
+
+
+
+     // ✅ 2. Send Reset Link
+
+     public function sendResetLink() {
+        global $conn; // Use global DB connection
+        
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $email = trim($_POST["email"]);
+    
+            // Check if email exists in the database
+            $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
+    
+            if ($stmt->num_rows > 0) {
+                // Generate a reset token and expiry time
+                $token = bin2hex(random_bytes(50));
+                $expiry = date("Y-m-d H:i:s", strtotime("+1 hour"));
+    
+                // Update user with reset token and expiry time
+                $stmt = $conn->prepare("UPDATE users SET verification_token=?, otp_expiry=? WHERE email=?");
+                $stmt->bind_param("sss", $token, $expiry, $email);
+                $stmt->execute();
+    
+                // Prepare the reset link
+                $reset_link = "http://localhost/reset_password.php?token=" . $token;
+    
+                // Create a new PHPMailer instance
+                $mail = new PHPMailer(true);
+                try {
+                    // Set up SMTP
+                    $mail->isSMTP();
+                    $mail->Host = 'smtp.gmail.com';
+                    $mail->SMTPAuth = true;
+                    $mail->Username = 'debnathsunny7852@gmail.com'; // Your SMTP email
+                    $mail->Password = 'rwpmqwohjffydazg'; // Your SMTP App password
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                    $mail->Port = 587;
+    
+                    // Set email headers
+                    $mail->setFrom('debnathsunny7852@gmail.com', 'Trip Planner');
+                    $mail->addAddress($email); // Recipient's email
+    
+                    // Set email content
+                    $mail->isHTML(true);
+                    $mail->Subject = "Password Reset Request";
+                    $mail->Body    = "Click the link below to reset your password:<br><br><a href=\"$reset_link\">Reset Password</a><br><br>This link expires in 1 hour.";
+    
+                    // Send email
+                    $mail->send();
+    
+                    // Set success message
+                    $_SESSION['message'] = "A reset link has been sent to your email.";
+                } catch (Exception $e) {
+                    // Handle PHPMailer exception
+                    $_SESSION['error'] = "Failed to send email. Try again. Error: " . $mail->ErrorInfo;
+                }
+            } else {
+                $_SESSION['error'] = "Email not found.";
+            }
+    
+            // Redirect back to the forgot password page
+            header("Location: forgot_password.php");
+            exit();
+        }
+    }
+    // ✅ 3. Show Reset Password Form
+    public function showResetForm() {
+        global $conn;
+        if (!isset($_GET["token"])) {
+            die("Invalid request.");
+        }
+
+        $token = $_GET["token"];
+
+        // Validate token
+        $stmt = $conn->prepare("SELECT id FROM users WHERE verification_token = ? AND otp_expiry > NOW()");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows == 0) {
+            die("Invalid or expired token.");
+        }
+
+        include "views/reset_password.php"; // Load the reset form view
+    }
+
+
+    // ✅ 4. Update Password
+    public function updatePassword() {
+        global $conn;
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $token = $_POST["token"];
+            $password = $_POST["password"];
+            $confirm_password = $_POST["confirm_password"];
+
+            if ($password !== $confirm_password) {
+                $_SESSION['error'] = "Passwords do not match.";
+                header("Location: reset_password.php?token=$token");
+                exit();
+            }
+
+            // Hash the password
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+            // Update password and clear token
+            $stmt = $conn->prepare("UPDATE users SET password=?, verification_token=NULL, otp_expiry=NULL WHERE verification_token=?");
+            $stmt->bind_param("ss", $hashed_password, $token);
+            if ($stmt->execute()) {
+                $_SESSION['message'] = "Password updated. You can now log in.";
+                header("Location: login.php");
+            } else {
+                $_SESSION['error'] = "Something went wrong. Try again.";
+                header("Location: reset_password.php?token=$token");
+            }
+            exit();
+        }
     }
 }
 
