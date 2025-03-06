@@ -16,7 +16,7 @@ class ParticipantController {
     
         // Check if the user is logged in and is a participant
         if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'participant') {
-            header("Location: /login");
+            header("Location: /"); // Or redirect to a relevant page
             exit();
         }
     
@@ -24,17 +24,17 @@ class ParticipantController {
     
         // Create an instance of the TripParticipant model
         $tripParticipantModel = new TripParticipant();
-        
+    
         // Get all trips for the participant
         $trips = $tripParticipantModel->getAllTripsForParticipant($userId);
     
         // Check for upcoming trips within the next 7 days
         $upcomingTrips = [];
-        $today = new \DateTime();  // Use the global DateTime class
+        $today = new \DateTime();
         $interval = new \DateInterval('P7D'); // 7 days
     
         foreach ($trips as $trip) {
-            $startDate = new \DateTime($trip['start_date']);  // Use global DateTime class
+            $startDate = new \DateTime($trip['start_date']);
             if ($today->diff($startDate)->days <= 7 && $today <= $startDate) {
                 $upcomingTrips[] = $trip; // Add to upcoming trips array
             }
@@ -46,11 +46,14 @@ class ParticipantController {
         // Load the participant dashboard view
         $viewPath = __DIR__ . '/../../resources/views/participant/dashboard.php';
         if (file_exists($viewPath)) {
+            // Extract variables for use in the view
+            extract($data);
             include $viewPath;
         } else {
             echo "Participant dashboard view not found!";
         }
     }
+    
     
     
     
@@ -123,7 +126,7 @@ class ParticipantController {
     public function viewTripDetails($tripId) {
         // Fetch trip details from the database using the TripParticipant model
         $tripDetailsModel = new TripParticipant($this->db);
-        
+    
         // Fetch all trip-related details using a single method
         $tripDetails = $tripDetailsModel->getTripDetails($tripId);
     
@@ -153,6 +156,7 @@ class ParticipantController {
             echo "No details found for this trip!";
         }
     }
+    
     
     
     
