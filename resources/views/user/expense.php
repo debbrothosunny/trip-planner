@@ -1,17 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Expenses</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    
+<?php
+$header_title = "Trip Expenses";
+$content = __DIR__ . '/expense.php'; // Load actual content
+include __DIR__ . '/../backend/layouts/app.php';
+?>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -57,21 +48,10 @@
             margin-bottom: 15px;
         }
     </style>
-</head>
 
-<body>
-    <div class="sidebar">
-        <h4 class="text-center">Dashboard</h4>
-        <a href="/user/dashboard"> Trip</a>
-        <a href="/user/transportation"> Transportation</a>
-        <a href="/user/accommodation"> Accommodation</a>
-        <a href="/user/expense" class="active"> Expense</a>
-        <a href="/user/budget-view"> Budget Track</a>
-        <a href="/user/my_trip_participants">Trip Participant</a>
-        <form action="/logout" method="POST" class="text-center mt-3">
-            <button type="submit" class="btn btn-danger">Logout</button>
-        </form>
-    </div>
+
+
+    
 
     <div class="content">
         <h2 class="mb-3">Trip Expenses</h2>
@@ -129,6 +109,4 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
 
-</html>

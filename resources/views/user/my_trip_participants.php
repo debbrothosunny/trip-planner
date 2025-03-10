@@ -1,14 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Trip Participants</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+<?php
+$header_title = "Accomodation";
+$content = __DIR__ . '/dashboard.php'; // Load actual content
+include __DIR__ . '/../backend/layouts/app.php';
+?>
 
-<body>
+<style>
+.sidebar {
+    width: 250px;
+    background: #2c3e50;
+    color: white;
+    height: 100vh;
+    position: fixed;
+    padding-top: 20px;
+}
+
+.sidebar a {
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.sidebar a i {
+    margin-right: 10px;
+}
+
+.sidebar a:hover,
+.sidebar a.active {
+    background: #34495e;
+}
+
+.content {
+    margin-left: 270px;
+    padding: 20px;
+    width: 100%;
+}
+</style>
+
     <div class="container mt-5">
         <h2 class="text-center mb-4">Participants in My Trips</h2>
 
@@ -59,6 +90,3 @@
 
     <!-- Bootstrap 5 JS (bundle includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>

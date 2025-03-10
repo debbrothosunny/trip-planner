@@ -1,17 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Trip</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-
-</head>
-<body class="bg-light">
+<?php
+$content = __DIR__ . '/dashboard.php'; // Load actual content
+include __DIR__ . '/../backend/layouts/app.php';
+?>
 
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -85,7 +75,3 @@ if (isset($_SESSION['success_message'])) {
     unset($_SESSION['success_message']); // Clear message after showing
 }
 ?>
-
-
-</body>
-</html>

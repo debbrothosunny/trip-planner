@@ -7,7 +7,7 @@ use App\Models\User;    // Ensure you have a User model
 use Core\Database;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-class AuthController {
+class AuthController {   
     private $userModel;
     protected $db;  
 
@@ -32,63 +32,59 @@ class AuthController {
 
     // Handle login request
     public function login() {
-        session_start();  // Ensure session is started before accessing session variables
+        session_start();
     
-        // Check if the request method is POST
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-            http_response_code(405);  // Method Not Allowed
-            die("405 Method Not Allowed");
+            http_response_code(405);
+            echo json_encode(["status" => "error", "message" => "405 Method Not Allowed"]);
+            exit();
         }
     
-        // Retrieve email and password from POST data
         $email = $_POST['email'] ?? null;
         $password = $_POST['password'] ?? null;
     
-        // Validate the input
         if (!$email || !$password) {
-            die("Email and Password are required!");
+            echo json_encode(["status" => "error", "message" => "Email and Password are required!"]);
+            exit();
         }
     
-        // Call the model to get the user by email
         $user = $this->userModel->login($email);
     
-        // Check if user exists and if the password is correct
         if (!$user || !password_verify($password, $user['password'])) {
-            die("Invalid credentials!");
+            echo json_encode(["status" => "error", "message" => "Invalid credentials!"]);
+            exit();
         }
     
-        // Store user details and role in session
         $_SESSION['user'] = $user;
-        $_SESSION['user_id'] = $user['id'];  // Store the user ID in the session
+        $_SESSION['user_id'] = $user['id'];
         $_SESSION['role'] = $user['role'];
     
-        // Redirect based on the user's role
+        // Return a JSON response instead of redirecting
         switch ($user['role']) {
             case 'admin':
-                header("Location: /admin/dashboard");
+                echo json_encode(["status" => "success", "redirect" => "/admin/dashboard"]);
                 break;
             case 'user':
-                header("Location: /user/dashboard");
+                echo json_encode(["status" => "success", "redirect" => "/user/dashboard"]);
                 break;
             case 'participant':
-                header("Location: /participant/dashboard");
+                echo json_encode(["status" => "success", "redirect" => "/participant/dashboard"]);
                 break;
             default:
-                // In case of an unknown role, destroy the session for security
                 session_destroy();
-                die("Role not recognized! Please contact support.");
+                echo json_encode(["status" => "error", "message" => "Role not recognized!"]);
         }
+    
         exit();
     }
+    
+    
     
     
     
 
     
     // Register method
-
- 
-
 
     private function sendOtpEmail($email)
     {
@@ -297,6 +293,23 @@ class AuthController {
     
 
 
+
+    
+
+    
+
+
+
+
+    
+
+    
+
+
+
+    
+
+
     // public function dashboard() {
     //     require_once __DIR__ . '/../../resources/views/dashboard.php';
     // }
@@ -449,6 +462,16 @@ class AuthController {
             exit();
         }
     }
+
+
+
+
+
+
+
+
+
+    
 }
 
 

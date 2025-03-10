@@ -20,6 +20,8 @@ use App\Controllers\BudgetController;
         $router->addRoute('GET', '/', [AuthController::class, 'showLoginForm']); // Shows login form
         $router->addRoute('POST', '/login', [AuthController::class, 'login']); // Handles login submission
 
+
+
         $router->addRoute('GET', '/forgot_password', [AuthController::class, 'forgotPassword']); // Show forgot password form
         $router->addRoute('POST', '/forgot_password', [AuthController::class, 'handleForgotPassword']); // Handle form submission
 
