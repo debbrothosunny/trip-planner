@@ -128,7 +128,7 @@
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
+            </div>  
         </div>
         <div class="text-center mt-3">
            <a href="/participant/dashboard">Go to Dashboard</a>

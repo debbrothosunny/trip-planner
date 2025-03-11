@@ -163,7 +163,17 @@
                                 class="btn btn-danger btn-sm">Decline</button>
                         </form>
                         <?php endif; ?>
+                        <!-- Check if the trip has expired and show message -->
+                        <?php
+        $currentDate = new DateTime();
+        $endDate = new DateTime($trip['end_date']);
+        if ($currentDate > $endDate): ?>
+                        <div class="alert alert-danger mt-3" role="alert">
+                            This trip has expired.
+                        </div>
+                        <?php endif; ?>
                     </div>
+
                 </div>
             </div>
             <?php endforeach; ?>
@@ -180,41 +190,45 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 
-   
     <!-- JavaScript for Upcoming Trip Alert -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
-    <?php foreach ($trips as $trip): ?>
-    (function() {
-        var tripName = "<?= htmlspecialchars($trip['trip_name']) ?>";
-        var startDateStr = "<?= $trip['start_date'] ?>";
-        var status = "<?= $trip['status'] ?>";
+        <?php foreach ($trips as $trip): ?>
+            (function() {
+                var tripName = "<?= htmlspecialchars($trip['trip_name']) ?>";
+                var startDateStr = "<?= $trip['start_date'] ?>";
+                var status = "<?= $trip['status'] ?>";
 
-        var startDate = new Date(startDateStr + "T00:00:00Z");
-        var today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
+                var startDate = new Date(startDateStr + "T00:00:00Z");
+                var today = new Date();
+                today.setUTCHours(0, 0, 0, 0);
 
-        var timeDiff = startDate.getTime() - today.getTime();
-        var daysRemaining = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                var timeDiff = startDate.getTime() - today.getTime();
+                var daysRemaining = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
-        console.log(`Trip: ${tripName}, Start Date: ${startDateStr}, Days Remaining: ${daysRemaining}, Status: ${status}`);
+                console.log(
+                    `Trip: ${tripName}, Start Date: ${startDateStr}, Days Remaining: ${daysRemaining}, Status: ${status}`
+                    );
 
-        if (daysRemaining <= 3 && status === 'accepted') { // 🔥 Changed from === 3 to <= 3
-            console.log("Showing SweetAlert for trip: " + tripName);
-            Swal.fire({
-                title: "Upcoming Trip!",
-                text: `Your trip '${tripName}' starts on ${startDateStr}.`,
-                icon: "info",
-                confirmButtonText: "OK",
-                timer: 5000
-            });
-        }
-    })();
-    <?php endforeach; ?>
-});
+                // Check if the trip has already started
+                if (daysRemaining > 0 && daysRemaining <= 3 && status === 'accepted') {
+                    console.log("Showing SweetAlert for upcoming trip: " + tripName);
+                    Swal.fire({
+                        title: "Upcoming Trip!",
+                        text: `Your trip '${tripName}' starts on ${startDateStr}.`,
+                        icon: "info",
+                        confirmButtonText: "OK",
+                        timer: 5000
+                    });
+                } else if (daysRemaining <= 0 && status === 'accepted') {
+                    // Trip has already started, no alert needed
+                    console.log("No alert needed. Trip has already started.");
+                }
+            })();
+        <?php endforeach; ?>
 
+    });
     </script>
 </body>
-
 
 </html>

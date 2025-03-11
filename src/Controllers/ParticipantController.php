@@ -78,6 +78,44 @@ class ParticipantController {
             try {
                 $db = Database::getInstance()->getConnection();
     
+                // Fetch trip details to get start and end dates (adjusted column name)
+                $tripStmt = $db->prepare("SELECT start_date, end_date FROM trips WHERE id = :trip_id");  // 'id' instead of 'trip_id'
+                $tripStmt->execute([':trip_id' => $tripId]);
+                $trip = $tripStmt->fetch(PDO::FETCH_ASSOC);
+    
+                if (!$trip) {
+                    $_SESSION['message'] = "Trip not found.";
+                    header("Location: /participant/dashboard");
+                    exit();
+                }
+    
+                $newTripStartDate = $trip['start_date'];
+                $newTripEndDate = $trip['end_date'];
+    
+                // Check if the user has any accepted trips with overlapping dates
+                $overlappingTripStmt = $db->prepare(
+                    "SELECT * FROM trip_participants 
+                     JOIN trips ON trip_participants.trip_id = trips.id  -- Adjusted column name
+                     WHERE trip_participants.user_id = :user_id 
+                     AND trip_participants.status = 'accepted' 
+                     AND (
+                         (trips.start_date BETWEEN :start_date AND :end_date) 
+                         OR (trips.end_date BETWEEN :start_date AND :end_date) 
+                         OR (trips.start_date <= :start_date AND trips.end_date >= :end_date)
+                     )"
+                );
+                $overlappingTripStmt->execute([
+                    ':user_id' => $userId,
+                    ':start_date' => $newTripStartDate,
+                    ':end_date' => $newTripEndDate
+                ]);
+    
+                if ($overlappingTripStmt->rowCount() > 0) {
+                    $_SESSION['message'] = "You already have an accepted trip during this time period.";
+                    header("Location: /participant/dashboard");
+                    exit();
+                }
+    
                 // Ensure participant exists before updating
                 $checkStmt = $db->prepare("SELECT * FROM trip_participants WHERE user_id = :user_id AND trip_id = :trip_id");
                 $checkStmt->execute([
@@ -119,6 +157,8 @@ class ParticipantController {
         header("Location: /participant/dashboard");
         exit();
     }
+    
+    
     
     
     

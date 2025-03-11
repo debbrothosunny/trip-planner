@@ -8,3 +8,5 @@ When a user creates a trip, participants can view all available trips and have t
 Once a participant accepts a trip, they receive a notification three days before the trip's start date as a reminder.
 Users can view which participants have joined their trips.
 Admins have full visibility over all trips and can see which participants have joined each trip.
+
+ 
