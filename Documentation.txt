@@ -5,8 +5,9 @@ Additionally, I have followed Object-Oriented Programming (OOP) principles in my
 This project includes an admin, user, and participant dashboard. Every new user, upon registration, gets a fresh dashboard where they can create trips, manage trip itineraries, transportation, accommodations, expenses, and track budgets.
 
 When a user creates a trip, participants can view all available trips and have the option to accept or decline invitations.
-Once a participant accepts a trip, they receive a notification three days before the trip's start date as a reminder.
+Once a participant accepts a trip, they are restricted from accepting any other trips that overlap with the selected trip’s start and end dates.
+After a trip's end date has passed, it is marked as expired, and no further actions can be taken for that trip.
+Participants will receive a notification three days before the trip's start date as a reminder.
 Users can view which participants have joined their trips.
 Admins have full visibility over all trips and can see which participants have joined each trip.
 
- 
