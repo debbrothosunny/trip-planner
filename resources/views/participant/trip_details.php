@@ -131,9 +131,9 @@
             </div>  
         </div>
         <div class="text-center mt-3">
-           <a href="/participant/dashboard">Go to Dashboard</a>
+           <a href="/participant/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
         </div>
-    </div>
+    </div>  
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

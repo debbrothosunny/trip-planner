@@ -22,3 +22,8 @@ This project includes an admin, user, and participant dashboard. Every new user,
 ----------------------- 12-03-2025------------------------
 
 *users can update their profile information, including their name, email, and password.
+
+*Participants can also view the name and email of the user who created each trip, allowing for greater transparency and communication.
+
+
+

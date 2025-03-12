@@ -17,9 +17,11 @@ class TripParticipant {
     public function getAllTripsForParticipant($userId) {
         $stmt = $this->db->prepare("
             SELECT t.id AS trip_id, t.name AS trip_name, t.start_date, t.end_date, t.budget, 
-                   COALESCE(tp.status, 'pending') AS status, tp.responded_at
+                   COALESCE(tp.status, 'pending') AS status, tp.responded_at,
+                   u.name AS creator_name, u.email AS creator_email
             FROM trips t
             LEFT JOIN trip_participants tp ON tp.trip_id = t.id AND tp.user_id = :user_id
+            LEFT JOIN users u ON t.user_id = u.id  -- Join users table to get creator details
             ORDER BY t.start_date ASC
         ");
         $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
@@ -29,6 +31,7 @@ class TripParticipant {
             return [];
         }
     }
+    
     
 
 

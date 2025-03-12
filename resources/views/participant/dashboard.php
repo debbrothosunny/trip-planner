@@ -130,6 +130,11 @@
 
         <?php if (!empty($trips)): ?>
         <div class="row">
+            <?php
+$currentDate = new DateTime();
+?>
+
+            <!-- Trip Loop -->
             <?php foreach ($trips as $trip): ?>
             <div class="col-md-4 mb-4">
                 <div class="card">
@@ -139,6 +144,8 @@
                             <strong>Start Date:</strong> <?= htmlspecialchars($trip['start_date']) ?><br>
                             <strong>End Date:</strong> <?= htmlspecialchars($trip['end_date']) ?><br>
                             <strong>Budget:</strong> $<?= htmlspecialchars($trip['budget']) ?><br>
+                            <strong>Created By:</strong> <?= htmlspecialchars($trip['creator_name']) ?>
+                            (<?= htmlspecialchars($trip['creator_email']) ?>)<br>
                             <strong>Status:</strong>
                             <a href="/participant/trip-details/<?= $trip['trip_id']; ?>"
                                 class="btn btn-info btn-sm">View Details</a>
@@ -146,15 +153,13 @@
                                 class="badge bg-<?= ($trip['status'] === 'accepted') ? 'success' : (($trip['status'] === 'declined') ? 'danger' : 'secondary'); ?>">
                                 <?= htmlspecialchars($trip['status'] ?? 'Pending') ?>
                             </span>
-                            <br>
-                            <?php if (!empty($trip['responded_at'])): ?>
-                            <small class="text-muted">Responded at:
-                                <?= htmlspecialchars($trip['responded_at']) ?></small>
-                            <?php endif; ?>
                         </p>
 
                         <!-- Show Accept and Decline buttons only if status is pending -->
-                        <?php if ($trip['status'] === 'pending'): ?>
+                        <?php
+                $endDate = new DateTime($trip['end_date']);
+                $isExpired = $currentDate > $endDate; // Check if the trip has expired
+                if ($trip['status'] === 'pending' && !$isExpired): ?>
                         <form method="POST" action="/participant/update-status">
                             <input type="hidden" name="trip_id" value="<?= $trip['trip_id']; ?>">
                             <button type="submit" name="status" value="accepted"
@@ -162,21 +167,17 @@
                             <button type="submit" name="status" value="declined"
                                 class="btn btn-danger btn-sm">Decline</button>
                         </form>
-                        <?php endif; ?>
-                        <!-- Check if the trip has expired and show message -->
-                        <?php
-        $currentDate = new DateTime();
-        $endDate = new DateTime($trip['end_date']);
-        if ($currentDate > $endDate): ?>
+                        <?php elseif ($isExpired): ?>
+                        <!-- Display a message if the trip has expired -->
                         <div class="alert alert-danger mt-3" role="alert">
-                            This trip has expired.
+                            This trip has expired. You can no longer accept or decline.
                         </div>
                         <?php endif; ?>
                     </div>
-
                 </div>
             </div>
             <?php endforeach; ?>
+
         </div>
 
         <?php else: ?>
@@ -208,7 +209,7 @@
 
                 console.log(
                     `Trip: ${tripName}, Start Date: ${startDateStr}, Days Remaining: ${daysRemaining}, Status: ${status}`
-                    );
+                );
 
                 // Check if the trip has already started
                 if (daysRemaining > 0 && daysRemaining <= 3 && status === 'accepted') {

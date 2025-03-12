@@ -11,6 +11,8 @@ class ParticipantController {
         $database = Database::getInstance(); // Use the singleton instance
         $this->db = $database->getConnection(); // Get the connection
     }
+
+    
     public function dashboard() {
         session_start();
     

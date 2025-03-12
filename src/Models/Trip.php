@@ -97,6 +97,16 @@ class Trip
         $stmt = $this->conn->query($query); // Use $this->conn for executing the query
         return $stmt->fetchAll(PDO::FETCH_ASSOC); // Return the result as an associative array
     }
+ 
+
+    public function getTripCreator($tripId) {
+        $sql = "SELECT users.name, users.email FROM trips 
+                JOIN users ON trips.user_id = users.id 
+                WHERE trips.id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$tripId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
 }
 
