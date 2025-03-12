@@ -7,10 +7,12 @@ use Core\Database; // ✅ Correct namespace
 
 class User {
     private $conn;
+    private $table = "users"; // Table name
 
     // Constructor: Get DB connection
     public function __construct() {
         $this->conn = Database::getInstance()->getConnection();  // Static method to get DB connection
+        
     }
 
     // Find a user by email
@@ -40,6 +42,42 @@ class User {
         $query = "SELECT id, name FROM users";
         $stmt = $this->conn->query($query);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+
+
+    // Fetch user by ID
+    public function getUser($user_id) {
+        $query = "SELECT id, name, email FROM " . $this->table . " WHERE id = :user_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Update user profile (name, email, and password)
+    public function updateProfile($user_id, $name, $email, $password = null) {
+        $query = "UPDATE " . $this->table . " SET name = :name, email = :email";
+        
+        if ($password) {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $query .= ", password = :password";
+        }
+
+        $query .= " WHERE id = :user_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":name", $name, PDO::PARAM_STR);
+        $stmt->bindParam(":email", $email, PDO::PARAM_STR);
+        
+        if ($password) {
+            $stmt->bindParam(":password", $hashedPassword, PDO::PARAM_STR);
+        }
+
+        $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
+
+        return $stmt->execute();
     }
 
 

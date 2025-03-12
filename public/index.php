@@ -155,6 +155,14 @@ use App\Controllers\BudgetController;
     });
 
 
+    $router->addGroup('/user/profile', function (RouteCollector $router) {
+        $router->addRoute('GET', '', [UserController::class, 'showProfile']);  // Show user profile
+        $router->addRoute('GET', '/edit', [UserController::class, 'editProfile']);  // Show edit form
+        $router->addRoute('POST', '/update', [UserController::class, 'updateProfile']); // Update profile (name, email, password)
+    });
+    
+
+
     // Participant Routes
     $router->addGroup('/participant', function (RouteCollector $router) {
         // 📌 Dashboard - Show pending invitations & accepted trips

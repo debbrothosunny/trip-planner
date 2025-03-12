@@ -104,6 +104,13 @@ button {
                         class="nav-item <?php echo (strpos($currentUrl, '/user/my_trip_participants') !== false) ? 'active' : ''; ?>">
                         <a href="/user/my_trip_participants" class="nav-link">Trip Participant</a>
                     </li>
+
+                    <li
+                        class="nav-item <?php echo (strpos($currentUrl, '/user/profile') !== false) ? 'active' : ''; ?>">
+                        <a href="/user/profile" class="nav-link">My profile</a>
+                    </li>
+
+
                     <?php elseif ($_SESSION['role'] == 'participant'): ?>
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/participant/dashboard') !== false) ? 'active' : ''; ?>">

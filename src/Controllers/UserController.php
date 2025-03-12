@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\Trip;
+use App\Models\User;
 use App\Models\TripItinerary;
 use \Core\Database; // Make sure this is correct
 use PDO;
@@ -12,6 +13,7 @@ class UserController
     private $itinerary; 
     protected $pdo;
     private $db;
+    private $user; // Add this property
     public function __construct() {
         // ✅ Get the database connection instance
         $this->db = Database::getInstance();
@@ -30,6 +32,8 @@ class UserController
         // ✅ Inject the PDO connection into models
         $this->trip = new Trip($this->pdo);
         $this->itinerary = new TripItinerary($this->pdo);
+         // ✅ Initialize the User model
+         $this->user = new User();
     }
     
     public function dashboard()
@@ -71,6 +75,65 @@ class UserController
             echo "User dashboard view not found!";
         }
     }
+
+    // user Profile Upade Logic
+    public function showProfile() {
+        session_start();
+        
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: /login.php");
+            exit();
+        }
+    
+        $user_id = $_SESSION['user_id'];
+    
+        // Fetch user details from the database
+        $user = $this->user->getUser($user_id);
+    
+        if (!$user) {
+            $_SESSION['error'] = "User not found!";
+            header("Location: /dashboard.php");
+            exit();
+        }
+    
+        // ✅ Define the profile view path
+        $profileViewPath = __DIR__ . '/../../resources/views/user/profile.php';
+    
+        // ✅ Check if view file exists before including
+        if (file_exists($profileViewPath)) {
+            include $profileViewPath;
+        } else {
+            echo "User profile view not found!";
+        }
+    }
+    
+    
+    public function updateProfile() {
+        session_start();
+    
+        // Check if user is logged in
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: /login.php");
+            exit();
+        }
+    
+        $user_id = $_SESSION['user_id'];
+        $name = $_POST['name'] ?? null;
+        $email = $_POST['email'] ?? null;
+        $password = !empty($_POST['password']) ? $_POST['password'] : null;
+    
+        // Update user profile
+        if ($this->user->updateProfile($user_id, $name, $email, $password)) {
+            $_SESSION['success'] = "Profile updated successfully!";
+        } else {
+            $_SESSION['error'] = "Failed to update profile!";
+        }
+    
+        // Redirect to the profile page route, not directly to the view file
+        header("Location: /user/profile");
+        exit();
+    }
+    
 
 
     public function myTripParticipants()
