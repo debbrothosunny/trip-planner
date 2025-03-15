@@ -7,6 +7,8 @@ use Exception;
 
 class Trip
 {
+
+    
     private $conn; // This will hold the PDO connection
     private $table = "trips";  // This defines the table name
 
@@ -90,8 +92,8 @@ class Trip
         return $stmt->execute();
     }
 
+
     // Fetch all trips from the trips table
- // Fetch all trips from the trips table
     public function getAllTrips() {
         $query = "SELECT id, name FROM trips"; // Query to get all trips
         $stmt = $this->conn->query($query); // Use $this->conn for executing the query

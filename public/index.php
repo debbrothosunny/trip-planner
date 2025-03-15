@@ -169,11 +169,15 @@ use App\Controllers\BudgetController;
         $router->addRoute('GET', '/dashboard', [ParticipantController::class, 'dashboard']);
 
         // 📌 Trip Details - Show details for a specific trip
-    $router->addRoute('GET', '/trip-details/{tripId}', [ParticipantController::class, 'viewTripDetails']);
-        
+        $router->addRoute('GET', '/trip-details/{tripId}', [ParticipantController::class, 'viewTripDetails']);
+            
         // 📌 Status Update - Accept/Decline trip
         $router->addRoute('POST', '/update-status', [ParticipantController::class, 'updateStatus']);
+
+        // 📌 Submit Review for a trip
+        $router->addRoute('POST', '/submitReview/{tripId}', [ParticipantController::class, 'submitReview']);
     });
+
 
     
 

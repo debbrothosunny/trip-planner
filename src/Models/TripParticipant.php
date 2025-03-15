@@ -8,6 +8,8 @@ use Core\Database; // Import the Database class
 
 class TripParticipant {
     private $db;
+
+    private $conn; // This will hold the PDO connection
  
     public function __construct() {
         $this->db = Database::getInstance()->getConnection(); // Singleton DB connection
@@ -81,8 +83,15 @@ class TripParticipant {
             return [];
         }
     }
-    
+
+
+   // Fetch participant status by tripId and userId
+   public function getParticipantByTripId($tripId, $userId) {
+    $query = "SELECT * FROM trip_participants WHERE trip_id = ? AND user_id = ?";
+    $stmt = $this->db->prepare($query);
+    $stmt->execute([$tripId, $userId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC); // Returns an associative array or false
+    }
     
 
 }
-

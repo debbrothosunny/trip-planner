@@ -3,18 +3,21 @@ namespace App\Controllers;
 use PDO;
 use PDOException;
 use App\Models\TripParticipant; 
+use App\Models\TripReview; 
 use Core\Database;// ✅ Correct the namespace
 class ParticipantController {
     private $db;
+    
 
     public function __construct() {
         $database = Database::getInstance(); // Use the singleton instance
         $this->db = $database->getConnection(); // Get the connection
+        session_start();
     }
 
-    
+
     public function dashboard() {
-        session_start();
+       
     
         // Check if the user is logged in and is a participant
         if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'participant') {
@@ -168,10 +171,10 @@ class ParticipantController {
     public function viewTripDetails($tripId) {
         // Fetch trip details from the database using the TripParticipant model
         $tripDetailsModel = new TripParticipant($this->db);
-    
+        
         // Fetch all trip-related details using a single method
         $tripDetails = $tripDetailsModel->getTripDetails($tripId);
-    
+        
         // Check if trip details were fetched successfully
         if (!empty($tripDetails)) {
             // Extract details from the returned array
@@ -179,13 +182,21 @@ class ParticipantController {
             $accommodations = $tripDetails['accommodations'] ?? [];
             $transportation = $tripDetails['transportation'] ?? [];
             $expenses = $tripDetails['expenses'] ?? [];
+            
+            // Fetch the participant details (status) for this trip
+            $participantDetails = $tripDetailsModel->getParticipantByTripId($tripId, $_SESSION['user_id']);
+            $participantStatus = $participantDetails['status'] ?? 'pending'; // Default to 'pending' if no status is found
+    
+            // Fetch the reviews for the trip from the TripReview model
+            $tripReviewModel = new TripReview($this->db);
+            $reviews = $tripReviewModel->getReviewsByTrip($tripId, $_SESSION['user_id']); // Pass user_id to avoid their own review
     
             // Include the trip_id for the status update form
-            $tripDetails['trip_id'] = $tripId; 
+            $tripDetails['trip_id'] = $tripId;
     
             // Pass the data to the view
-            $viewData = compact('itinerary', 'accommodations', 'transportation', 'expenses', 'tripDetails');
-    
+            $viewData = compact('itinerary', 'accommodations', 'transportation', 'expenses', 'tripDetails', 'participantStatus', 'reviews');
+            
             // Render the view
             $viewPath = __DIR__ . '/../../resources/views/participant/trip_details.php';
             if (file_exists($viewPath)) {
@@ -200,10 +211,40 @@ class ParticipantController {
     }
     
     
+
+
+
+
+    public function submitReview($tripId) {
+        // Check if the participant has accepted the trip (status = 'accepted')
+        $tripParticipantModel = new TripParticipant();
+        $participant = $tripParticipantModel->getParticipantByTripId($tripId, $_SESSION['user_id']);
+    
+        // Ensure the participant data is valid and status is 'accepted'
+        if (!$participant || !isset($participant['status']) || $participant['status'] !== 'accepted') {
+            echo "You cannot review this trip until you accept it!";
+            return;
+        }
+    
+        // Collect rating and review from the POST request
+        $rating = $_POST['rating'] ?? null;
+        $reviewText = $_POST['review_text'] ?? null;
+    
+        // Ensure rating and review text are provided
+        if ($rating && $reviewText) {
+            // Save the review
+            $tripReviewModel = new TripReview($this->db); // You need to pass $this->db to TripReview
+            $userId = $_SESSION['user_id'];  // Assuming user_id is stored in the session
+            $tripReviewModel->saveReview($tripId, $userId, $rating, $reviewText);
+            echo "Thank you for your feedback!";
+        } else {
+            echo "Please provide both a rating and a review.";
+        }
+    }
     
     
     
     
-    
+      
     
 }

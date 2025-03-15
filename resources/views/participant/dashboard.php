@@ -130,11 +130,8 @@
 
         <?php if (!empty($trips)): ?>
         <div class="row">
-            <?php
-$currentDate = new DateTime();
-?>
+            <?php $currentDate = new DateTime(); ?>
 
-            <!-- Trip Loop -->
             <?php foreach ($trips as $trip): ?>
             <div class="col-md-4 mb-4">
                 <div class="card">
@@ -155,11 +152,11 @@ $currentDate = new DateTime();
                             </span>
                         </p>
 
-                        <!-- Show Accept and Decline buttons only if status is pending -->
                         <?php
-                $endDate = new DateTime($trip['end_date']);
-                $isExpired = $currentDate > $endDate; // Check if the trip has expired
-                if ($trip['status'] === 'pending' && !$isExpired): ?>
+                            $endDate = new DateTime($trip['end_date']);
+                            $isExpired = $currentDate > $endDate; 
+
+                            if ($trip['status'] === 'pending' && !$isExpired): ?>
                         <form method="POST" action="/participant/update-status">
                             <input type="hidden" name="trip_id" value="<?= $trip['trip_id']; ?>">
                             <button type="submit" name="status" value="accepted"
@@ -167,8 +164,13 @@ $currentDate = new DateTime();
                             <button type="submit" name="status" value="declined"
                                 class="btn btn-danger btn-sm">Decline</button>
                         </form>
+
+                        <?php elseif ($trip['status'] === 'accepted' && $isExpired): ?>
+                        <div class="alert alert-success mt-3" role="alert">
+                            <strong>Completed</strong>
+                        </div>
+
                         <?php elseif ($isExpired): ?>
-                        <!-- Display a message if the trip has expired -->
                         <div class="alert alert-danger mt-3" role="alert">
                             This trip has expired. You can no longer accept or decline.
                         </div>
@@ -177,7 +179,6 @@ $currentDate = new DateTime();
                 </div>
             </div>
             <?php endforeach; ?>
-
         </div>
 
         <?php else: ?>
@@ -187,11 +188,14 @@ $currentDate = new DateTime();
         <?php endif; ?>
     </div>
 
+
     <!-- Required Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 
     <!-- JavaScript for Upcoming Trip Alert -->
+
+    <?php if (!empty($trips)): ?>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         <?php foreach ($trips as $trip): ?>
@@ -230,6 +234,8 @@ $currentDate = new DateTime();
 
     });
     </script>
+
+    <?php endif; ?>
 </body>
 
 </html>

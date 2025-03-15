@@ -26,4 +26,13 @@ This project includes an admin, user, and participant dashboard. Every new user,
 *Participants can also view the name and email of the user who created each trip, allowing for greater transparency and communication.
 
 
+--------------------15-03-2025---------------------------
+
+Trip Rating and Review:
+
+*Once a participant accepts a trip, they can rate and review the places visited during the trip.Participants can also view reviews from other trip participants, helping them make more informed decisions about the trips.
+
+*When a trip's end date has passed, the accepted trip is marked as completed.
+
+
 
