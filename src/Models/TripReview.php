@@ -31,6 +31,7 @@ class TripReview {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    
     // Get all reviews for a trip, including the reviewer's name
     public function getReviewsByTrip($tripId) {
         // Join the trip_reviews table with the users table to get the reviewer's name

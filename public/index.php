@@ -154,10 +154,9 @@ use App\Controllers\BudgetController;
         $router->addRoute('GET', '/my_trip_participants', [UserController::class, 'myTripParticipants']);
     });
 
-
+  
     $router->addGroup('/user/profile', function (RouteCollector $router) {
         $router->addRoute('GET', '', [UserController::class, 'showProfile']);  // Show user profile
-        $router->addRoute('GET', '/edit', [UserController::class, 'editProfile']);  // Show edit form
         $router->addRoute('POST', '/update', [UserController::class, 'updateProfile']); // Update profile (name, email, password)
     });
     
@@ -176,6 +175,11 @@ use App\Controllers\BudgetController;
 
         // 📌 Submit Review for a trip
         $router->addRoute('POST', '/submitReview/{tripId}', [ParticipantController::class, 'submitReview']);
+    });
+
+    $router->addGroup('/participant/profile', function (RouteCollector $router) {
+        $router->addRoute('GET', '', [ParticipantController::class, 'showProfile']);  // Show user profile
+        $router->addRoute('POST', '/update', [ParticipantController::class, 'updateProfile']); // Update profile (name, email, password)
     });
 
 

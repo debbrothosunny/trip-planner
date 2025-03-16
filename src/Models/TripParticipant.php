@@ -73,16 +73,23 @@ class TripParticipant {
             $stmt->execute([':trip_id' => $tripId]);
             $expenses = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+            // Fetch count of accepted participants
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS accepted_count FROM trip_participants WHERE trip_id = :trip_id AND status = 'accepted'");
+            $stmt->execute([':trip_id' => $tripId]);
+            $acceptedParticipants = $stmt->fetch(PDO::FETCH_ASSOC)['accepted_count'] ?? 0;
+    
             return [
                 'itinerary' => $itinerary,
                 'accommodations' => $accommodations,
                 'transportation' => $transportation,
-                'expenses' => $expenses
+                'expenses' => $expenses,
+                'accepted_participants' => $acceptedParticipants
             ];
         } catch (PDOException $e) {
             return [];
         }
     }
+    
 
 
    // Fetch participant status by tripId and userId

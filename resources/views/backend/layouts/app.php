@@ -100,6 +100,7 @@ button {
                         class="nav-item <?php echo (strpos($currentUrl, '/user/budget-view') !== false) ? 'active' : ''; ?>">
                         <a href="/user/budget-view" class="nav-link">Budget Track</a>
                     </li>
+                    
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/user/my_trip_participants') !== false) ? 'active' : ''; ?>">
                         <a href="/user/my_trip_participants" class="nav-link">Trip Participant</a>
@@ -116,15 +117,12 @@ button {
                         class="nav-item <?php echo (strpos($currentUrl, '/participant/dashboard') !== false) ? 'active' : ''; ?>">
                         <a href="/participant/dashboard" class="nav-link">Dashboard</a>
                     </li>
+
                     <li
-                        class="nav-item <?php echo (strpos($currentUrl, '/participant/trip-details/' . $_SESSION['trip_id']) !== false) ? 'active' : ''; ?>">
-                        <a href="/participant/trip-details/<?php echo $_SESSION['trip_id']; ?>" class="nav-link">Trip
-                            Details</a>
+                        class="nav-item <?php echo (strpos($currentUrl, '/participant/profile') !== false) ? 'active' : ''; ?>">
+                        <a href="/participant/profile" class="nav-link">My profile</a>
                     </li>
-                    <li
-                        class="nav-item <?php echo (strpos($currentUrl, '/participant/update-status') !== false) ? 'active' : ''; ?>">
-                        <a href="/participant/update-status" class="nav-link">Status Update</a>
-                    </li>
+
                     <?php endif; ?>
                     <?php endif; ?>
                 </ul>

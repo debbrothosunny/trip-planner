@@ -241,6 +241,92 @@ class ParticipantController {
             echo "Please provide both a rating and a review.";
         }
     }
+
+
+
+ // ✅ Show trip participant profile
+ public function showProfile() {
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: /login");
+        exit();
+    }
+
+    $user_id = $_SESSION['user_id'];
+
+    try {
+        $query = "
+            SELECT u.id, u.name, u.email, tp.trip_id, tp.status
+            FROM users u 
+            JOIN trip_participants tp ON u.id = tp.user_id 
+            WHERE u.id = :user_id
+        ";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $participant = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$participant) {
+            $_SESSION['error'] = "Trip Participant not found!";
+            header("Location: /dashboard");
+            exit();
+        }
+
+        require __DIR__ . '/../../resources/views/participant/profile.php';
+
+    } catch (PDOException $e) {
+        die("Database error: " . $e->getMessage());
+    }
+}
+
+// ✅ Update trip participant profile (Only Name, Email, Password)
+    public function updateProfile() {
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: /login");
+            exit();
+        }
+
+        $user_id = $_SESSION['user_id'];
+        $name = $_POST['name'] ?? null;
+        $email = $_POST['email'] ?? null;
+        $password = !empty($_POST['password']) ? password_hash($_POST['password'], PASSWORD_BCRYPT) : null;
+
+        try {
+            // Ensure the user is a trip participant
+            $stmt = $this->db->prepare("SELECT * FROM trip_participants WHERE user_id = :user_id");
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
+                $_SESSION['error'] = "Unauthorized access!";
+                header("Location: /dashboard");
+                exit();
+            }
+
+            // ✅ Update user details (only name, email, password if provided)
+            if ($password) {
+                $query = "UPDATE users SET name = :name, email = :email, password = :password WHERE id = :user_id";
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':password', $password, PDO::PARAM_STR);
+            } else {
+                $query = "UPDATE users SET name = :name, email = :email WHERE id = :user_id";
+                $stmt = $this->db->prepare($query);
+            }
+
+            $stmt->bindParam(':name', $name, PDO::PARAM_STR);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $_SESSION['success'] = "Profile updated successfully!";
+            header("Location: /participant/profile");
+            exit();
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Error updating profile!";
+            header("Location: /participant/profile");
+            exit();
+        }
+    }
     
     
     

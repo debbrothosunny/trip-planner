@@ -4,35 +4,47 @@ Additionally, I have followed Object-Oriented Programming (OOP) principles in my
 
 This project includes an admin, user, and participant dashboard. Every new user, upon registration, gets a fresh dashboard where they can create trips, manage trip itineraries, transportation, accommodations, expenses, and track budgets.
 
-*When a user creates a trip, participants can view all available trips and have the option to accept or decline invitations.
-*Participants will receive a notification three days before the trip's start date as a reminder.
-*Users can view which participants have joined their trips.
-*Admins have full visibility over all trips and can see which participants have joined each trip.
+When a user creates a trip, participants can view all available trips and have the option to accept or decline invitations.
+Participants will receive a notification three days before the trip's start date as a reminder.
+Users can view which participants have joined their trips.
+Admins have full visibility over all trips and can see which participants have joined each trip.
 
 
------------------------ 11-03-2025------------------------
+-----------11-03-2025----------------
 
-
-*.Once a participant accepts a trip, they are restricted from accepting any other trips that overlap with the selected trip’s start and end dates.
-*.After a trip's end date has passed, it is marked as expired, and no further actions can be taken for that trip.
-
+Once a participant accepts a trip, they are restricted from accepting any other trips that overlap with the selected trip’s start and end dates.
+After a trip's end date has passed, it is marked as expired, and no further actions can be taken for that trip.
 
 
 
------------------------ 12-03-2025------------------------
+-----------12-03-2025----------------
 
-*users can update their profile information, including their name, email, and password.
+Users can update their profile information, including their name, email, and password.
 
-*Participants can also view the name and email of the user who created each trip, allowing for greater transparency and communication.
+Participants can also view the name and email of the user who created each trip, allowing for greater transparency and communication.
 
 
---------------------15-03-2025---------------------------
+-----------15-03-2025------------------
 
-Trip Rating and Review:
+*Trip Rating and Review:
 
-*Once a participant accepts a trip, they can rate and review the places visited during the trip.Participants can also view reviews from other trip participants, helping them make more informed decisions about the trips.
+*Once a participant accepts a trip, they can rate and review the places visited during the trip. Participants can also view reviews from other trip participants, helping them make more informed decisions about the trips.
 
 *When a trip's end date has passed, the accepted trip is marked as completed.
 
+*The total number of participants who have accepted the trip is displayed.
 
 
+
+-----------16-03-2025------------------
+
+*When a trip's end date is expired, it will automatically disappear after three days. (For example, if today is August 5 and a trip ended on August 2, it will still be visible. On August 6, it will automatically disappear.)
+
+
+*Participants can update their dashboard profile, including changing their name, email, and password.
+
+
+
+*****Upcoming Features (Hotel Booking/Flight Booking):****************************
+
+Hotel booking and flight booking functionality is currently under development and will be included in the next update.

@@ -42,6 +42,7 @@
 
     <div class="container my-5">
         <h2 class="text-center mb-4">🌍 Trip Details</h2>
+        <p><strong>Total Participants:</strong> <?= $tripDetails['accepted_participants'] ?></p>
 
         <div class="row g-4">
             <!-- Itinerary Section -->
@@ -126,6 +127,11 @@
                         <?php else : ?>
                         <p class="text-muted">No expenses recorded.</p>
                         <?php endif; ?>
+
+                      
+
+
+
                     </div>
                 </div>
             </div>

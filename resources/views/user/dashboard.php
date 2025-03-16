@@ -17,7 +17,7 @@ body {
     height: 100vh;
     position: fixed;
     padding-top: 20px;
-}
+}  
 
 .sidebar a {
     color: white;

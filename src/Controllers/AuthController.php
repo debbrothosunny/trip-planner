@@ -127,18 +127,31 @@ class AuthController {
     
 
     public function register()
-    {   
+    {    
         session_start();  // Ensure the session is started
     
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            // Sanitize and trim the inputs
             $name = filter_var(trim($_POST['name']), FILTER_SANITIZE_STRING);
             $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
             $password = trim($_POST['password']);
             $role = $_POST['role'];
+        
+            // Validate name (ensure it's not empty)
+            if (empty($name)) {
+                echo "Name is required.";
+                exit();
+            }
     
             // Validate email format
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 echo "Invalid email format.";
+                exit();
+            }
+    
+            // Validate password (e.g., minimum length)
+            if (strlen($password) < 6) {
+                echo "Password must be at least 6 characters long.";
                 exit();
             }
     
@@ -162,7 +175,7 @@ class AuthController {
                 $_SESSION['otp'] = $otp;
                 $_SESSION['otp_expiry'] = $expiryTime;
     
-                // Debugging session data
+                // Debugging session data (you can remove this after testing)
                 echo "OTP: " . $otp . "<br>";
                 echo "Expiry Time: " . date("Y-m-d H:i:s", $expiryTime) . "<br>";
     
@@ -177,6 +190,7 @@ class AuthController {
             }
         }
     }
+    
     
     
     
