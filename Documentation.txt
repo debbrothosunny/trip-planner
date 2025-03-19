@@ -46,6 +46,9 @@ Participants can also view the name and email of the user who created each trip,
 
 *When a participant makes a payment and the admin accepts it, only then can the participant officially join the trip. Once the payment is confirmed, the trip reminder countdown system starts.
 
+----------------19-03-2025---------------------------
+
+*The admin has the ability to view all payment details made by participants for trips.
 
 
 *****Upcoming Features (Hotel Booking/Flight Booking):****************************

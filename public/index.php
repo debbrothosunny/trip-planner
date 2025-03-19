@@ -40,6 +40,7 @@ use App\Controllers\BudgetController;
     
 
 
+
     // Admin Routes
     $router->addGroup('/admin', function (RouteCollector $router) {
         // ✅ Admin Dashboard (System Analytics & User Management)
@@ -54,7 +55,10 @@ use App\Controllers\BudgetController;
         // ✅ Accept Participant Payment
         $router->addRoute('GET', '/accept-payment/{tripId}/{userId}', [AdminController::class, 'acceptPayment']);
 
+        // ✅ View Payment Details (new route to view payment details)
+        $router->addRoute('GET', '/view-payment-details/{tripId}/{userId}', [AdminController::class, 'viewPaymentDetails']);
     });
+
 
 
     

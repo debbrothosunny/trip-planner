@@ -202,10 +202,46 @@ class AdminController {
             exit();
         }
     }
+
+
+    // ✅ View Payment Details
+    public function viewPaymentDetails($tripId, $userId) {
+        session_start();
     
-
-
-
-
+        // Check if the user is logged in and has the admin role
+        if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
+            header("Location: /login");
+            exit();
+        }
+    
+        try {
+            // Fetch payment details from the database
+            $stmt = $this->db->prepare("
+                SELECT id, amount, payment_method, transaction_id, payment_status, created_at
+                FROM payments
+                WHERE user_id = :user_id AND trip_id = :trip_id
+            ");
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+            $stmt->bindParam(':trip_id', $tripId, PDO::PARAM_INT);
+            $stmt->execute();
+    
+            $paymentDetails = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            // If no payment record is found
+            if (!$paymentDetails) {
+                echo json_encode(['error' => 'Payment details not found']);
+                exit();
+            }
+    
+            // Return the payment details in JSON format
+            echo json_encode($paymentDetails);
+    
+        } catch (PDOException $e) {
+            // Handle any errors (optionally log the error)
+            echo json_encode(['error' => 'Error fetching payment details']);
+            exit();
+        }
+    }
+    
     
 }

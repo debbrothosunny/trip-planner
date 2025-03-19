@@ -179,7 +179,6 @@
                 </table>
             </div>
         </div>
-
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white text-center fw-bold">
                 Trip Participants
@@ -210,11 +209,12 @@
                                             <?= htmlspecialchars($participant['trip_status']) ?>
                                         </span>
 
-                                        <!-- Show Amount If Payment Accepted -->
-                                        <?php if ($participant['payment_status'] === 'accepted' && isset($participant['amount'])): ?>
-                                        <span class="badge bg-info">
-                                            Paid: <?= htmlspecialchars($participant['amount']) ?>
-                                        </span>
+                                        <?php if ($participant['payment_status'] === 'completed' && isset($participant['amount'])): ?>
+                                        <!-- Button to open modal with payment details -->
+                                        <a href="javascript:void(0)" class="btn btn-info btn-sm"
+                                            onclick="loadPaymentDetails(<?= $trip['id'] ?>, <?= $participant['user_id'] ?>)">
+                                            View Details
+                                        </a>
                                         <?php endif; ?>
 
                                         <!-- Accept Payment Button -->
@@ -230,11 +230,42 @@
                                 <?php endif; ?>
                             </td>
                         </tr>
-                        <?php endforeach;?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </div>
+
+        <!-- Modal Structure -->
+        <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="paymentDetailsModalLabel">Payment Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="paymentDetailsList">
+                            <li><strong>Amount:</strong> <?= htmlspecialchars($paymentDetails['amount']) ?></li>
+                            <li><strong>Payment Method:</strong>
+                                <?= htmlspecialchars($paymentDetails['payment_method']) ?></li>
+                            <li><strong>Transaction ID:</strong>
+                                <?= htmlspecialchars($paymentDetails['transaction_id']) ?></li>
+                            <li><strong>Payment Status:</strong>
+                                <?= htmlspecialchars($paymentDetails['payment_status']) ?></li>
+                            <li><strong>Created At:</strong> <?= htmlspecialchars($paymentDetails['created_at']) ?></li>
+                        </ul>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
 
     </div>
 
@@ -243,6 +274,35 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+function loadPaymentDetails(tripId, userId) {
+    // Make an AJAX request to fetch payment details
+    fetch(`/admin/view-payment-details/${tripId}/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                // Populate the modal with the payment details
+                const paymentDetailsList = document.getElementById('paymentDetailsList');
+                paymentDetailsList.innerHTML = `
+                    
+                    <li><strong>Amount:</strong> ${data.amount}</li>
+                    <li><strong>Payment Method:</strong> ${data.payment_method}</li>
+                    <li><strong>Transaction ID:</strong> ${data.transaction_id}</li>
+                    <li><strong>Payment Status:</strong> ${data.payment_status}</li>
+                    <li><strong>Created At:</strong> ${data.created_at}</li>
+                `;
+                
+                // Open the modal
+                const paymentDetailsModal = new bootstrap.Modal(document.getElementById('paymentDetailsModal'));
+                paymentDetailsModal.show();
+            }
+        })
+        .catch(error => alert('Error loading payment details'));
+}
+</script>
 </body>
 
 </html>

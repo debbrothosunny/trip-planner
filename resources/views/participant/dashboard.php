@@ -138,6 +138,8 @@ body {
     border-color: #ffeeba;
     color: #856404;
 }
+
+
 </style>
 <!-- Navigation Bar with Logout -->
 <nav class="navbar navbar-expand-lg navbar-light">
