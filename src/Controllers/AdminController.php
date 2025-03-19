@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use PDO;
+use PDOException;
 use Core\Database; // ✅ Correct the namespace
 
 class AdminController {
@@ -37,15 +38,23 @@ class AdminController {
         $participants = [];
         foreach ($trips as $trip) {
             $tripId = $trip['id'];
-            $participantStmt = $this->db->prepare("SELECT users.id AS user_id, users.name AS user_name, trip_participants.status
-                                                  FROM trip_participants
-                                                  JOIN users ON trip_participants.user_id = users.id
-                                                  WHERE trip_participants.trip_id = :trip_id");
+            $participantStmt = $this->db->prepare("
+            SELECT users.id AS user_id, 
+                   users.name AS user_name, 
+                   trip_participants.status AS trip_status, 
+                   payments.payment_status, 
+                   payments.amount  -- ✅ Fetch payment amount
+            FROM trip_participants
+            JOIN users ON trip_participants.user_id = users.id
+            LEFT JOIN payments ON payments.user_id = users.id AND payments.trip_id = :trip_id
+            WHERE trip_participants.trip_id = :trip_id
+        ");
             $participantStmt->bindParam(':trip_id', $tripId, PDO::PARAM_INT);
             $participantStmt->execute();
             $participants[$tripId] = $participantStmt->fetchAll(PDO::FETCH_ASSOC);
         }
-    
+
+       
         // Pass data to the view
         $data = [
             'total_users' => $analytics['total_users'],
@@ -148,6 +157,55 @@ class AdminController {
 
         return ['total_users' => $userCount, 'total_trips' => $tripCount];
     }
+
+
+
+    // ✅ Accept Participant Payment
+
+    public function acceptPayment($tripId, $userId) {
+        session_start();
+        if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
+            header("Location: /login");
+            exit();
+        }
+    
+        try {
+            // Start a transaction to ensure atomicity
+            $this->db->beginTransaction();
+    
+            // Update the payment status in the payments table to 'Completed'
+            $stmt = $this->db->prepare("
+                UPDATE payments
+                SET payment_status = 'completed'
+                WHERE user_id = :user_id AND trip_id = :trip_id AND payment_status = 'pending'
+            ");
+            
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+            $stmt->bindParam(':trip_id', $tripId, PDO::PARAM_INT);
+            $stmt->execute();
+    
+            // Optionally: Insert a record in the payments table for this transaction (if required)
+            // For now, it's assumed the payment already exists, and we are only updating its status.
+    
+            // Commit the transaction
+            $this->db->commit();
+    
+            // Redirect back to the dashboard with a success message
+            header("Location: /admin/dashboard");
+            exit();
+        } catch (PDOException $e) {
+            // Rollback the transaction in case of error
+            $this->db->rollBack();
+    
+            // Optionally log the error
+            header("Location: /admin/dashboard?payment_error=1");
+            exit();
+        }
+    }
+    
+
+
+
 
     
 }

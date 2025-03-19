@@ -3,22 +3,28 @@ namespace App\Controllers;
 use PDO;
 use PDOException;
 use App\Models\TripParticipant; 
+use App\Models\Payment; 
 use App\Models\TripReview; 
 use Core\Database;// ✅ Correct the namespace
 class ParticipantController {
     private $db;
+
+    private $paymentModel;
+    private $tripParticipantModel;
     
 
     public function __construct() {
         $database = Database::getInstance(); // Use the singleton instance
         $this->db = $database->getConnection(); // Get the connection
+
+        // Initialize the models
+        $this->paymentModel = new Payment();
+        $this->tripParticipantModel = new TripParticipant();
         session_start();
     }
 
 
     public function dashboard() {
-       
-    
         // Check if the user is logged in and is a participant
         if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'participant') {
             header("Location: /"); // Or redirect to a relevant page
@@ -45,8 +51,24 @@ class ParticipantController {
             }
         }
     
-        // Pass trips and upcoming trips data to the view
-        $data = ['trips' => $trips, 'upcomingTrips' => $upcomingTrips];
+        // Create an instance of the Payment model
+        $paymentModel = new Payment();
+    
+        // Initialize an array to hold all payments
+        $payments = [];
+    
+        // Get payments for each trip the participant is part of
+        foreach ($trips as $trip) {
+            $tripPayments = $paymentModel->getPaymentsByUser($userId, $trip['trip_id']); // Changed 'id' to 'trip_id'
+            $payments = array_merge($payments, $tripPayments); // Merge all payments
+        }
+    
+        // Prepare the data to pass to the view
+        $data = [
+            'trips' => $trips,
+            'upcomingTrips' => $upcomingTrips,
+            'payments' => $payments // Add the payments data
+        ];
     
         // Load the participant dashboard view
         $viewPath = __DIR__ . '/../../resources/views/participant/dashboard.php';
@@ -62,74 +84,77 @@ class ParticipantController {
     
     
     
+    
+    
+    
 
-    // 📌 Update Status - Accept or Decline a Trip
+// 📌 Update Status - Accept or Decline a Trip
     public function updateStatus()
     {
         session_start();
-    
+
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['message'] = "User not logged in.";
             header("Location: /login");
             exit();
         }
-    
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trip_id'], $_POST['status'])) {
             $userId = $_SESSION['user_id'];
             $tripId = $_POST['trip_id'];
             $status = $_POST['status'];
             $timestamp = date('Y-m-d H:i:s');
-    
+
             try {
                 $db = Database::getInstance()->getConnection();
-    
-                // Fetch trip details to get start and end dates (adjusted column name)
-                $tripStmt = $db->prepare("SELECT start_date, end_date FROM trips WHERE id = :trip_id");  // 'id' instead of 'trip_id'
+
+                // Fetch trip details to get start and end dates
+                $tripStmt = $db->prepare("SELECT start_date, end_date FROM trips WHERE id = :trip_id");
                 $tripStmt->execute([':trip_id' => $tripId]);
                 $trip = $tripStmt->fetch(PDO::FETCH_ASSOC);
-    
+
                 if (!$trip) {
                     $_SESSION['message'] = "Trip not found.";
                     header("Location: /participant/dashboard");
                     exit();
                 }
-    
+
                 $newTripStartDate = $trip['start_date'];
                 $newTripEndDate = $trip['end_date'];
-    
+
                 // Check if the user has any accepted trips with overlapping dates
                 $overlappingTripStmt = $db->prepare(
                     "SELECT * FROM trip_participants 
-                     JOIN trips ON trip_participants.trip_id = trips.id  -- Adjusted column name
-                     WHERE trip_participants.user_id = :user_id 
-                     AND trip_participants.status = 'accepted' 
-                     AND (
-                         (trips.start_date BETWEEN :start_date AND :end_date) 
-                         OR (trips.end_date BETWEEN :start_date AND :end_date) 
-                         OR (trips.start_date <= :start_date AND trips.end_date >= :end_date)
-                     )"
+                    JOIN trips ON trip_participants.trip_id = trips.id
+                    WHERE trip_participants.user_id = :user_id 
+                    AND trip_participants.status = 'accepted' 
+                    AND (
+                        (trips.start_date BETWEEN :start_date AND :end_date) 
+                        OR (trips.end_date BETWEEN :start_date AND :end_date) 
+                        OR (trips.start_date <= :start_date AND trips.end_date >= :end_date)
+                    )"
                 );
                 $overlappingTripStmt->execute([
                     ':user_id' => $userId,
                     ':start_date' => $newTripStartDate,
                     ':end_date' => $newTripEndDate
                 ]);
-    
+
                 if ($overlappingTripStmt->rowCount() > 0) {
                     $_SESSION['message'] = "You already have an accepted trip during this time period.";
                     header("Location: /participant/dashboard");
                     exit();
                 }
-    
-                // Ensure participant exists before updating
+
+                // Ensure participant exists before updating or inserting
                 $checkStmt = $db->prepare("SELECT * FROM trip_participants WHERE user_id = :user_id AND trip_id = :trip_id");
                 $checkStmt->execute([
                     ':user_id' => $userId,
                     ':trip_id' => $tripId
                 ]);
-    
+
                 if ($checkStmt->rowCount() == 0) {
-                    // If the participant is not in the trip_participants table, insert them first
+                    // Insert participant if not already in the table
                     $insertStmt = $db->prepare("INSERT INTO trip_participants (trip_id, user_id, status, responded_at, updated_at) 
                                                 VALUES (:trip_id, :user_id, :status, :responded_at, :updated_at)");
                     $insertStmt->execute([
@@ -140,11 +165,11 @@ class ParticipantController {
                         ':updated_at' => $timestamp
                     ]);
                 } else {
-                    // Update existing participant record
-                    $stmt = $db->prepare("UPDATE trip_participants 
-                                          SET status = :status, responded_at = :responded_at, updated_at = :updated_at
-                                          WHERE user_id = :user_id AND trip_id = :trip_id");
-                    $stmt->execute([
+                    // Update the existing participant status
+                    $updateStmt = $db->prepare("UPDATE trip_participants 
+                                            SET status = :status, responded_at = :responded_at, updated_at = :updated_at
+                                            WHERE user_id = :user_id AND trip_id = :trip_id");
+                    $updateStmt->execute([
                         ':status' => $status,
                         ':responded_at' => $timestamp,
                         ':updated_at' => $timestamp,
@@ -152,13 +177,18 @@ class ParticipantController {
                         ':trip_id' => $tripId
                     ]);
                 }
-    
+
                 $_SESSION['message'] = "Status updated successfully!";
+                header("Location: /participant/dashboard");
+                exit();
             } catch (PDOException $e) {
                 $_SESSION['message'] = "Database Error: " . $e->getMessage();
+                header("Location: /participant/dashboard");
+                exit();
             }
         }
-    
+
+        $_SESSION['message'] = "Invalid request.";
         header("Location: /participant/dashboard");
         exit();
     }
@@ -327,10 +357,74 @@ class ParticipantController {
             exit();
         }
     }
-    
-    
-    
-    
+
+
+    // Trip participant Payment
+    public function makePayment() {
+        if (!isset($_SESSION['user_id'])) {
+            $_SESSION['message'] = "User not logged in.";
+            header("Location: /login");
+            exit();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trip_id'], $_POST['amount'], $_POST['payment_method'], $_POST['transaction_id'])) {
+            $userId = $_SESSION['user_id'];
+            $tripId = $_POST['trip_id'];
+            $amount = $_POST['amount'];
+            $paymentMethod = $_POST['payment_method'];
+            $transactionId = $_POST['transaction_id'];  // New transaction ID
+            $timestamp = date('Y-m-d H:i:s');
+
+            try {
+                $db = Database::getInstance()->getConnection();
+
+                // Check if the user is part of the trip
+                $tripParticipantStmt = $db->prepare("SELECT * FROM trip_participants WHERE user_id = :user_id AND trip_id = :trip_id AND status = 'accepted'");
+                $tripParticipantStmt->execute([':user_id' => $userId, ':trip_id' => $tripId]);
+
+                if ($tripParticipantStmt->rowCount() == 0) {
+                    $_SESSION['message'] = "You are not registered for this trip.";
+                    header("Location: /participant/dashboard");
+                    exit();
+                }
+
+                // Check if a pending payment exists
+                $paymentCheckStmt = $db->prepare("SELECT * FROM payments WHERE user_id = :user_id AND trip_id = :trip_id AND payment_status = 'pending'");
+                $paymentCheckStmt->execute([':user_id' => $userId, ':trip_id' => $tripId]);
+
+                if ($paymentCheckStmt->rowCount() > 0) {
+                    $_SESSION['message'] = "You already have a pending payment for this trip.";
+                    header("Location: /participant/dashboard");
+                    exit();
+                }
+
+                // Insert payment record with transaction_id
+                $insertPaymentStmt = $db->prepare("INSERT INTO payments (trip_id, user_id, amount, payment_method, payment_status, created_at, transaction_id) 
+                VALUES (:trip_id, :user_id, :amount, :payment_method, 'pending', :created_at, :transaction_id)");
+                $insertPaymentStmt->execute([
+                    ':trip_id' => $tripId,
+                    ':user_id' => $userId,
+                    ':amount' => $amount,
+                    ':payment_method' => $paymentMethod,
+                    ':created_at' => $timestamp,
+                    ':transaction_id' => $transactionId // Insert transaction_id
+                ]);
+
+                $_SESSION['message'] = "Payment initiated successfully!";
+                header("Location: /participant/dashboard");
+                exit();
+            } catch (PDOException $e) {
+                $_SESSION['message'] = "Database Error: " . $e->getMessage();
+                header("Location: /participant/dashboard");
+                exit();
+            }
+        }
+
+        $_SESSION['message'] = "Invalid request.";
+        header("Location: /participant/dashboard");
+        exit();
+    }
+
       
     
 }

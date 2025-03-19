@@ -203,8 +203,25 @@
                                     <div class="list-group-item d-flex justify-content-between align-items-center">
                                         <span
                                             class="fw-semibold"><?= htmlspecialchars($participant['user_name']) ?></span>
+
+                                        <!-- Show Status -->
                                         <span
-                                            class="badge <?= $participant['status'] == 'Confirmed' ? 'bg-success' : 'bg-warning' ?>"><?= htmlspecialchars($participant['status']) ?></span>
+                                            class="badge <?= $participant['trip_status'] == 'accepted' ? 'bg-success' : 'bg-warning' ?>">
+                                            <?= htmlspecialchars($participant['trip_status']) ?>
+                                        </span>
+
+                                        <!-- Show Amount If Payment Accepted -->
+                                        <?php if ($participant['payment_status'] === 'accepted' && isset($participant['amount'])): ?>
+                                        <span class="badge bg-info">
+                                            Paid: <?= htmlspecialchars($participant['amount']) ?>
+                                        </span>
+                                        <?php endif; ?>
+
+                                        <!-- Accept Payment Button -->
+                                        <?php if ($participant['trip_status'] == 'accepted' && $participant['payment_status'] === 'pending'): ?>
+                                        <a href="/admin/accept-payment/<?= $trip['id'] ?>/<?= $participant['user_id'] ?>"
+                                            class="btn btn-success btn-sm">Accept Payment</a>
+                                        <?php endif; ?>
                                     </div>
                                     <?php endforeach; ?>
                                 </div>

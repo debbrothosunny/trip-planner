@@ -51,6 +51,8 @@ class TripParticipant {
         return $stmt->execute();
     }
 
+
+
     public function getTripDetails($tripId) {
         try {
             // Fetch itinerary separately
@@ -99,6 +101,10 @@ class TripParticipant {
     $stmt->execute([$tripId, $userId]);
     return $stmt->fetch(PDO::FETCH_ASSOC); // Returns an associative array or false
     }
+
+
+
+    
     
 
 }

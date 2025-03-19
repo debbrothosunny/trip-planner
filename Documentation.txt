@@ -44,6 +44,9 @@ Participants can also view the name and email of the user who created each trip,
 *Participants can update their dashboard profile, including changing their name, email, and password.
 
 
+*When a participant makes a payment and the admin accepts it, only then can the participant officially join the trip. Once the payment is confirmed, the trip reminder countdown system starts.
+
+
 
 *****Upcoming Features (Hotel Booking/Flight Booking):****************************
 

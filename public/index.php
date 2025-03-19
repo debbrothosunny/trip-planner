@@ -38,6 +38,8 @@ use App\Controllers\BudgetController;
     // Logout Route
     $router->addRoute('POST', '/logout', [AuthController::class, 'logout']);
     
+
+
     // Admin Routes
     $router->addGroup('/admin', function (RouteCollector $router) {
         // ✅ Admin Dashboard (System Analytics & User Management)
@@ -48,7 +50,12 @@ use App\Controllers\BudgetController;
 
         // ✅ View User's Trips
         $router->addRoute('GET', '/user/{id}/trips', [AdminController::class, 'viewUserTrips']);
+
+        // ✅ Accept Participant Payment
+        $router->addRoute('GET', '/accept-payment/{tripId}/{userId}', [AdminController::class, 'acceptPayment']);
+
     });
+
 
     
 
@@ -175,7 +182,12 @@ use App\Controllers\BudgetController;
 
         // 📌 Submit Review for a trip
         $router->addRoute('POST', '/submitReview/{tripId}', [ParticipantController::class, 'submitReview']);
+
+        // 📌 Payment Routes
+        $router->addRoute('POST', '/make-payment', [ParticipantController::class, 'makePayment']);
     });
+
+
 
     $router->addGroup('/participant/profile', function (RouteCollector $router) {
         $router->addRoute('GET', '', [ParticipantController::class, 'showProfile']);  // Show user profile
