@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 15, 2025 at 10:43 AM
+-- Generation Time: Mar 19, 2025 at 09:28 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -51,6 +51,30 @@ INSERT INTO `accommodations` (`id`, `trip_id`, `name`, `location`, `price`, `ame
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `payments`
+--
+
+CREATE TABLE `payments` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `trip_id` int(11) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `payment_method` varchar(50) NOT NULL,
+  `transaction_id` varchar(100) NOT NULL,
+  `payment_status` enum('pending','completed','failed') DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`id`, `user_id`, `trip_id`, `amount`, `payment_method`, `transaction_id`, `payment_status`, `created_at`) VALUES
+(14, 9, 23, 20000.00, 'bkash', 'sunny123', 'completed', '2025-03-19 02:22:18');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `transportation`
 --
 
@@ -73,7 +97,6 @@ CREATE TABLE `transportation` (
 --
 
 INSERT INTO `transportation` (`id`, `trip_id`, `type`, `company_name`, `departure_location`, `arrival_location`, `departure_date`, `arrival_date`, `booking_reference`, `user_id`, `amount`) VALUES
-(2, 15, 'Flight', 'Airways Company', 'New York', 'London', '2025-02-28 00:00:00', '2025-03-01 00:00:00', 'ABC12345', 2, 5000.00),
 (5, 16, 'Flight', 'Air Canada	', 'New York, USA', 'Toronto, Canada', '2025-03-10 00:00:00', '2025-03-16 00:00:00', 'AC12345', 3, 4000.00);
 
 -- --------------------------------------------------------
@@ -96,8 +119,8 @@ CREATE TABLE `trips` (
 --
 
 INSERT INTO `trips` (`id`, `name`, `user_id`, `start_date`, `end_date`, `budget`) VALUES
-(15, 'Japan Summer Trip 2025\"', 2, '2025-03-08', '2025-03-11', 5000.00),
-(16, 'Canada Summer Trip 2025', 3, '2025-03-14', '2025-03-14', 20000.00);
+(23, 'Japan Summer Trip 2025\"', 3, '2025-03-22', '2025-03-31', 20000.00),
+(25, 'Canada Winter Trip 2025', 6, '2025-04-01', '2025-04-20', 25000.00);
 
 -- --------------------------------------------------------
 
@@ -159,7 +182,6 @@ CREATE TABLE `trip_itineraries` (
 --
 
 INSERT INTO `trip_itineraries` (`id`, `trip_id`, `day_title`, `location`, `description`, `itinerary_date`, `created_at`, `updated_at`) VALUES
-(2, 15, 'Arrival & Check-in', 'New York City, USA', 'Arrive at the destination, check into the hotel, and relax.', '2025-03-10', '2025-02-27 18:33:54', '2025-02-27 18:33:54'),
 (3, 16, ' Day 1: Vancouver', 'Vancouver, British Columbia', 'Explore Vancouver\'s vibrant cultural scene, including Indigenous art galleries and cultural centers.', '2025-03-17', '2025-02-27 21:17:07', '2025-03-05 18:07:02'),
 (6, 16, 'Day:2 Whistler', 'Explore Whistler Village and engage in outdoor activities.', 'Whistler, British Columbia', '2025-03-16', '2025-03-05 18:07:41', '2025-03-05 18:07:52');
 
@@ -173,7 +195,7 @@ CREATE TABLE `trip_participants` (
   `id` int(11) NOT NULL,
   `trip_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `status` enum('pending','accepted','declined') DEFAULT 'pending',
+  `status` enum('pending','accepted','declined') NOT NULL,
   `responded_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -184,8 +206,8 @@ CREATE TABLE `trip_participants` (
 --
 
 INSERT INTO `trip_participants` (`id`, `trip_id`, `user_id`, `status`, `responded_at`, `created_at`, `updated_at`) VALUES
-(27, 16, 8, 'accepted', '2025-03-15 08:38:12', '2025-03-15 07:38:12', '2025-03-15 02:38:12'),
-(28, 16, 7, 'accepted', '2025-03-15 08:42:14', '2025-03-15 07:42:14', '2025-03-15 02:42:14');
+(3, 23, 7, 'accepted', '2025-03-18 18:24:36', '2025-03-18 17:24:36', '2025-03-18 12:24:36'),
+(4, 23, 9, 'accepted', '2025-03-19 07:51:50', '2025-03-19 06:51:50', '2025-03-19 01:51:50');
 
 -- --------------------------------------------------------
 
@@ -209,7 +231,9 @@ CREATE TABLE `trip_reviews` (
 
 INSERT INTO `trip_reviews` (`id`, `trip_id`, `user_id`, `rating`, `review_text`, `created_at`, `updated_at`) VALUES
 (1, 16, 8, 3, 'Adipisci sed molliti', '2025-03-15 07:40:26', '2025-03-15 07:40:26'),
-(2, 16, 7, 4, 'Nice ', '2025-03-15 07:54:48', '2025-03-15 07:54:48');
+(2, 16, 7, 4, 'Nice ', '2025-03-15 07:54:48', '2025-03-15 07:54:48'),
+(3, 16, 7, 1, 'fvdvdfg', '2025-03-17 14:54:18', '2025-03-17 14:54:18'),
+(4, 23, 7, 5, 'Hello', '2025-03-18 17:26:30', '2025-03-18 17:26:30');
 
 -- --------------------------------------------------------
 
@@ -236,9 +260,9 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`, `is_verified`, `otp_expiry`, `verification_token`, `updated_at`) VALUES
 (2, 'Sunny', 'debnathsunny7852@gmail.com', '$2y$10$9dPAZ51FzdJuLxyVJQmGxup0d8TzgFs30zeANRMU2C5ltzt3Ew2fe', 'admin', '2025-02-27 18:27:37', 1, '0000-00-00 00:00:00', '989281', '2025-03-04 15:12:38'),
-(3, 'purna', 'purnadebosree@gmail.com', '$2y$10$nPA/VBvTxvHq4JuuuN4IRuF9FQCvZZfKUOY5oV66g8lAkxyTiYMe2', 'user', '2025-02-27 19:03:48', 1, '0000-00-00 00:00:00', '358178', '2025-02-27 19:03:48'),
+(3, 'purna', 'purnadebosree@gmail.com', '$2y$10$nPA/VBvTxvHq4JuuuN4IRuF9FQCvZZfKUOY5oV66g8lAkxyTiYMe2', 'user', '2025-02-27 19:03:48', 1, '0000-00-00 00:00:00', '358178', '2025-03-18 17:22:27'),
 (6, 'New User', 'hovev31057@jomspar.com', '$2y$10$RsdNmyTKmov6AH538V9greLFiCZrSnwq0yrTSP1.S0Eq6QhNk70Xa', 'user', '2025-02-28 17:55:15', 1, '0000-00-00 00:00:00', '167785', '2025-03-12 16:09:52'),
-(7, 'New Participant', 'posex52211@hartaria.com', '$2y$10$737LXIoIr7SWV1.qf0niSeYGaV/PHqwPTYqwcA1W0tfZ9v3Prjbgi', 'participant', '2025-03-04 20:04:30', 1, '0000-00-00 00:00:00', '650900', '2025-03-04 20:04:30'),
+(7, 'New Participant', 'posex52211@hartaria.com', '$2y$10$LfNiiuB/Ca/zzi2zlDZNb.44pWX5qan.KxqATrlYM7okzDyM2IDXm', 'participant', '2025-03-04 20:04:30', 1, '0000-00-00 00:00:00', '650900', '2025-03-16 18:38:43'),
 (8, 'Trip Participant', 'govih40059@jomspar.com', '$2y$10$ObQWAs.GPrir0akSk3xz0Oi/KhNDEE.xXhNgTp6B.WiSVswlwdZe2', 'participant', '2025-03-05 08:55:44', 1, '0000-00-00 00:00:00', '265221', '2025-03-05 08:56:45'),
 (9, 'Trip Participant 2', 'hikoj10247@jomspar.com', '$2y$10$bB5ktkU8s.X107PuJNXER.BPJJtp3ycUGHBmL9uD4FLGattAauKhS', 'participant', '2025-03-05 09:00:16', 1, '0000-00-00 00:00:00', '523976', '2025-03-05 09:00:16'),
 (11, 'yyyy', 'wofed66083@dwriters.com', '$2y$10$9pMwvjIBPwNvjP5UDbPOAuu9zUqodRxksTwiYXevJ7B6Vgr8qzYja', 'participant', '2025-03-09 16:17:34', 1, '0000-00-00 00:00:00', '852620', '2025-03-09 16:17:34');
@@ -252,6 +276,14 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`, `i
 --
 ALTER TABLE `accommodations`
   ADD PRIMARY KEY (`id`),
+  ADD KEY `trip_id` (`trip_id`);
+
+--
+-- Indexes for table `payments`
+--
+ALTER TABLE `payments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
   ADD KEY `trip_id` (`trip_id`);
 
 --
@@ -325,6 +357,12 @@ ALTER TABLE `accommodations`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 
 --
+-- AUTO_INCREMENT for table `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
 -- AUTO_INCREMENT for table `transportation`
 --
 ALTER TABLE `transportation`
@@ -334,7 +372,7 @@ ALTER TABLE `transportation`
 -- AUTO_INCREMENT for table `trips`
 --
 ALTER TABLE `trips`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `trip_expenses`
@@ -358,13 +396,13 @@ ALTER TABLE `trip_itineraries`
 -- AUTO_INCREMENT for table `trip_participants`
 --
 ALTER TABLE `trip_participants`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `trip_reviews`
 --
 ALTER TABLE `trip_reviews`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -381,6 +419,13 @@ ALTER TABLE `users`
 --
 ALTER TABLE `accommodations`
   ADD CONSTRAINT `accommodations_ibfk_1` FOREIGN KEY (`trip_id`) REFERENCES `trips` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `payments`
+--
+ALTER TABLE `payments`
+  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`trip_id`) REFERENCES `trips` (`id`);
 
 --
 -- Constraints for table `transportation`
@@ -418,8 +463,8 @@ ALTER TABLE `trip_itineraries`
 -- Constraints for table `trip_participants`
 --
 ALTER TABLE `trip_participants`
-  ADD CONSTRAINT `trip_participants_ibfk_1` FOREIGN KEY (`trip_id`) REFERENCES `trips` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `trip_participants_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `trip_participants_ibfk_1` FOREIGN KEY (`trip_id`) REFERENCES `trips` (`id`),
+  ADD CONSTRAINT `trip_participants_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `trip_reviews`
