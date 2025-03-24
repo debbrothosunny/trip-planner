@@ -54,3 +54,12 @@ Participants can also view the name and email of the user who created each trip,
 *****Upcoming Features (Hotel Booking/Flight Booking):****************************
 
 Hotel booking and flight booking functionality is currently under development and will be included in the next update.
+
+
+
+
+--------------------------Hotel Booking 19-03-2025---------------------------
+
+The admin can create hotels and hotel rooms. When a user creates accommodation and selects a location, the system dynamically retrieves and displays the available hotel names based on the selected location using AJAX. Upon selecting a hotel, the system will show details such as room types, prices, available rooms, and price per night. The user can then select a room along with the check-in and check-out dates.
+
+Initially, when the user creates accommodation, the status will be marked as "pending." Once the admin confirms the accommodation booking, it will be marked as "booked" by the user. Additionally, the system ensures that the selected check-in and check-out dates are blocked for other users, preventing double bookings for the same dates.

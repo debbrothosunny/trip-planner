@@ -48,7 +48,7 @@ body {
 
 
 
-<div class="content">
+<div class="content">  
     <div class="container mt-4">
         <h2 class="mb-3">Trip Dashboard</h2>
         <a href="/user/create-trip" class="btn btn-success mb-3">+ Add New Trip</a>
@@ -63,7 +63,7 @@ body {
                     <th>Trip Name</th>
                     <th>Start Date</th>
                     <th>End Date</th>
-                    <th>Budget</th>
+                    <th>Budget</th> 
                     <th>Actions</th>
                 </tr>
             </thead>

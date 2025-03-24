@@ -16,7 +16,8 @@
                 <h2 class="mb-0">User's Trips</h2>
             </div>
             <div class="card-body">
-                <h4 class="mb-3">Name: <span class="fw-bold"> <?= htmlspecialchars($data['user']['name']) ?> </span></h4>
+                <h4 class="mb-3">Name: <span class="fw-bold"> <?= htmlspecialchars($data['user']['name']) ?> </span>
+                </h4>
                 <h5>Email: <span class="fw-bold"> <?= htmlspecialchars($data['user']['email']) ?> </span></h5>
 
                 <?php if (!empty($data['userTrips'])): ?>
@@ -29,11 +30,13 @@
                                 <th>Start Date</th>
                                 <th>End Date</th>
                                 <th>Budget</th>
-                                <th>Accommodation Name</th>
+                                <th>Hotel Name</th>
                                 <th>Location</th>
-                                <th>Price</th>
-                                <th>Check-in Time</th>
-                                <th>Check-out Time</th>
+                                <th>Room Type</th>
+                                <th>Room Price</th>
+                                <th>Room Description</th>
+                                <th>Check-in Date</th>
+                                <th>Check-out Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -44,11 +47,13 @@
                                 <td><?= htmlspecialchars($trip['start_date']) ?></td>
                                 <td><?= htmlspecialchars($trip['end_date']) ?></td>
                                 <td><?= htmlspecialchars($trip['budget']) ?></td>
-                                <td><?= htmlspecialchars($trip['accommodation_name']) ?></td>
+                                <td><?= htmlspecialchars($trip['hotel_name']) ?></td>
                                 <td><?= htmlspecialchars($trip['location']) ?></td>
+                                <td><?= htmlspecialchars($trip['room_type']) ?></td>
                                 <td><?= htmlspecialchars($trip['price']) ?></td>
-                                <td><?= htmlspecialchars($trip['check_in_time']) ?></td>
-                                <td><?= htmlspecialchars($trip['check_out_time']) ?></td>
+                                <td><?= htmlspecialchars($trip['room_description']) ?></td>
+                                <td><?= htmlspecialchars($trip['check_in_date']) ?></td>
+                                <td><?= htmlspecialchars($trip['check_out_date']) ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -64,7 +69,9 @@
                     <a href="/admin/dashboard" class="btn btn-primary">Back to Dashboard</a>
                 </div>
             </div>
+
         </div>
     </div>
 </body>
+
 </html>

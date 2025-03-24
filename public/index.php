@@ -13,6 +13,7 @@ use App\Controllers\ExpenseController;
 use App\Controllers\InvitationController;
 use App\Controllers\ParticipantController;
 use App\Controllers\BudgetController;
+use App\Controllers\HotelController;
 
 // Create a new router
     $dispatcher = FastRoute\simpleDispatcher(function (RouteCollector $router) {
@@ -40,10 +41,9 @@ use App\Controllers\BudgetController;
     
 
 
-
     // Admin Routes
     $router->addGroup('/admin', function (RouteCollector $router) {
-        // ✅ Admin Dashboard (System Analytics & User Management)
+        // ✅ Admin Dashboard
         $router->addRoute('GET', '/dashboard', [AdminController::class, 'dashboard']);
 
         // ✅ Delete a User
@@ -55,9 +55,51 @@ use App\Controllers\BudgetController;
         // ✅ Accept Participant Payment
         $router->addRoute('GET', '/accept-payment/{tripId}/{userId}', [AdminController::class, 'acceptPayment']);
 
-        // ✅ View Payment Details (new route to view payment details)
+        // ✅ View Payment Details
         $router->addRoute('GET', '/view-payment-details/{tripId}/{userId}', [AdminController::class, 'viewPaymentDetails']);
+
+        // 🔹 Hotel Management Routes (Newly Added)
+        
+
+        // ✅ List all hotels
+        $router->addRoute('GET', '/hotels', [HotelController::class, 'index']);
+
+        // ✅ Create a new hotel (form page)
+        $router->addRoute('GET', '/hotels/create', [HotelController::class, 'create']);
+
+
+        // ✅ Store new hotel (form submission)
+        $router->addRoute('POST', '/hotels/store', [HotelController::class, 'store']);
+
+        // ✅ Edit hotel (form page)
+        $router->addRoute('GET', '/hotels/edit/{id}', [HotelController::class, 'edit']);
+
+        // ✅ Update hotel (form submission)
+        $router->addRoute('POST', '/hotels/update/{id}', [HotelController::class, 'update']);
+
+        // ✅ Delete hotel
+        $router->addRoute('GET', '/hotels/delete/{id}', [HotelController::class, 'delete']);
+
+        // ✅ List all hotels Rooms
+        $router->addRoute('GET', '/hotels/rooms', [HotelController::class, 'roomIndex']);
+        $router->addRoute('GET', '/hotels/rooms/create', [HotelController::class, 'createRoom']);
+        $router->addRoute('POST', '/hotels/rooms/store', [HotelController::class, 'storeRoom']);
+        $router->addRoute('GET', '/hotels/rooms/edit/{id}', [HotelController::class, 'editRoom']);
+        $router->addRoute('POST', '/hotels/rooms/update/{id}', [HotelController::class, 'updateRoom']);
+        $router->addRoute('GET', '/hotels/rooms/delete/{id}', [HotelController::class, 'deleteRoom']);
+
+
+
+        // ✅ Hotel Bookings Management
+        $router->addRoute('GET', '/hotel-bookings', [HotelController::class, 'bookingIndex']); // List all bookings
+        $router->addRoute('GET', '/hotel-bookings/view/{id}', [HotelController::class, 'viewBooking']); // Optional: view single booking
+        $router->addRoute('POST', '/hotel-bookings/confirm', [HotelController::class, 'confirmBooking']); // Confirm booking
+   
+
     });
+
+
+        
 
 
 
@@ -123,12 +165,20 @@ use App\Controllers\BudgetController;
 
     $router->addGroup('/user/accommodation', function (RouteCollector $router) {
         $router->addRoute('GET', '', [AccommodationController::class, 'accommodationList']);  // Show all accommodations
-        $router->addRoute('GET', '/create', [AccommodationController::class, 'create']);  // Show the create form
-        $router->addRoute('POST', '/store', [AccommodationController::class, 'store']);  // Store new accommodation
+        $router->addRoute('GET', '/create', [AccommodationController::class, 'accommodationCreate']);  // Show the create form
+        
+        // Update the route to include the {location} parameter
+        $router->addRoute('GET', '/fetch-hotels/{location}', [AccommodationController::class, 'fetchHotelsByLocation']);
+
+        $router->addRoute('GET', '/fetch-hotel-rooms/{hotelId}', [AccommodationController::class, 'fetchHotelRooms']);
+    
+        // Other routes
+        $router->addRoute('POST', '/store', [AccommodationController::class, 'storeAccommodation']);  // Store new accommodation
         $router->addRoute('GET', '/{id}/edit', [AccommodationController::class, 'accommodationEdit']);  // Show edit form
         $router->addRoute('POST', '/update/{id}', [AccommodationController::class, 'update']); // Update accommodation
         $router->addRoute('GET', '/delete/{id}', [AccommodationController::class, 'delete']);
     });
+    
     
 
 

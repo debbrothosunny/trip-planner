@@ -199,38 +199,46 @@ class ParticipantController {
     
 
     public function viewTripDetails($tripId) {
-        // Fetch trip details from the database using the TripParticipant model
+        // Load TripParticipant model
         $tripDetailsModel = new TripParticipant($this->db);
         
-        // Fetch all trip-related details using a single method
+        // Fetch all trip-related details
         $tripDetails = $tripDetailsModel->getTripDetails($tripId);
-        
-        // Check if trip details were fetched successfully
+    
         if (!empty($tripDetails)) {
-            // Extract details from the returned array
+            // Destructure details
             $itinerary = $tripDetails['itinerary'] ?? [];
             $accommodations = $tripDetails['accommodations'] ?? [];
             $transportation = $tripDetails['transportation'] ?? [];
             $expenses = $tripDetails['expenses'] ?? [];
-            
-            // Fetch the participant details (status) for this trip
+            $acceptedParticipants = $tripDetails['accepted_participants'] ?? 0;
+    
+            // Get logged-in participant's status
             $participantDetails = $tripDetailsModel->getParticipantByTripId($tripId, $_SESSION['user_id']);
-            $participantStatus = $participantDetails['status'] ?? 'pending'; // Default to 'pending' if no status is found
+            $participantStatus = $participantDetails['status'] ?? 'pending';
     
-            // Fetch the reviews for the trip from the TripReview model
+            // Load reviews using TripReview model
             $tripReviewModel = new TripReview($this->db);
-            $reviews = $tripReviewModel->getReviewsByTrip($tripId, $_SESSION['user_id']); // Pass user_id to avoid their own review
+            $reviews = $tripReviewModel->getReviewsByTrip($tripId, $_SESSION['user_id']);
     
-            // Include the trip_id for the status update form
-            $tripDetails['trip_id'] = $tripId;
+            // Prepare data for view
+            $tripDetails['trip_id'] = $tripId; // Include trip_id for forms if needed
     
-            // Pass the data to the view
-            $viewData = compact('itinerary', 'accommodations', 'transportation', 'expenses', 'tripDetails', 'participantStatus', 'reviews');
-            
-            // Render the view
+            $viewData = compact(
+                'itinerary',
+                'accommodations',
+                'transportation',
+                'expenses',
+                'tripDetails',
+                'participantStatus',
+                'reviews',
+                'acceptedParticipants'
+            );
+    
+            // Render view
             $viewPath = __DIR__ . '/../../resources/views/participant/trip_details.php';
             if (file_exists($viewPath)) {
-                extract($viewData); // Extract data for use in the view
+                extract($viewData);
                 include $viewPath;
             } else {
                 echo "Trip details view not found!";
@@ -239,6 +247,7 @@ class ParticipantController {
             echo "No details found for this trip!";
         }
     }
+    
     
     
 

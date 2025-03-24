@@ -93,22 +93,33 @@ class AdminController {
             return;
         }
     
-        // Fetch trips and related accommodations associated with the user
+        // ✅ Fetch trips with accommodations, hotels, and hotel room details
         $tripStmt = $this->db->prepare("
-            SELECT 
-                trips.id AS trip_id, 
-                trips.name AS trip_name, 
-                trips.start_date, 
-                trips.end_date, 
-                trips.budget, 
-                accommodations.name AS accommodation_name, 
-                accommodations.location, 
-                accommodations.price, 
-                accommodations.check_in_time, 
-                accommodations.check_out_time
-            FROM trips 
-            LEFT JOIN accommodations ON trips.id = accommodations.trip_id 
-            WHERE trips.user_id = ?");
+        SELECT 
+            t.id AS trip_id, 
+            t.name AS trip_name, 
+            t.start_date, 
+            t.end_date, 
+            t.budget,
+    
+            a.room_type,
+            a.check_in_date,
+            a.check_out_date,
+    
+            h.name AS hotel_name,
+            h.location,
+    
+            hr.price,
+            hr.description AS room_description
+    
+        FROM trips t
+        LEFT JOIN accommodations a ON a.user_id = t.user_id
+        LEFT JOIN hotels h ON a.hotel_id = h.id
+        LEFT JOIN hotel_rooms hr ON hr.hotel_id = h.id AND hr.room_type = a.room_type
+        WHERE t.user_id = ?
+    ");
+    
+    
         $tripStmt->execute([$id]);
         $userTrips = $tripStmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -126,6 +137,7 @@ class AdminController {
             echo "View for user trips not found!";
         }
     }
+    
     
     
     

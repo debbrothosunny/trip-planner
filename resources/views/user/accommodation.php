@@ -42,23 +42,12 @@ include __DIR__ . '/../backend/layouts/app.php';
 <div class="container mt-4">
     <h2 class="text-center mb-4">Accommodation List</h2>
 
+    <!-- Add New Accommodation Button -->
     <div class="d-flex justify-content-between mb-3">
         <a href="/user/accommodation/create" class="btn btn-primary">Add New Accommodation</a>
     </div>
 
-    <!-- Check if there is any SweetAlert session variable -->
-    <?php if (isset($_SESSION['sweetalert'])): ?>
-    <script>
-    Swal.fire({
-        title: '<?= $_SESSION['sweetalert']['title']; ?>',
-        text: '<?= $_SESSION['sweetalert']['text']; ?>',
-        icon: '<?= $_SESSION['sweetalert']['icon']; ?>',
-        confirmButtonText: 'OK'
-    });
-    </script>
-    <?php unset($_SESSION['sweetalert']); // Unset to ensure it doesn't display again ?>
-    <?php endif; ?>
-
+    <!-- Check if accommodations exist -->
     <?php if (!empty($accommodations)): ?>
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
@@ -66,45 +55,76 @@ include __DIR__ . '/../backend/layouts/app.php';
                 <tr>
                     <th>#</th>
                     <th>Hotel Name</th>
-                    <th>Trip Name</th>
-                    <th>Location</th>
-                    <th>Price</th>
-                    <th>Amenities</th>
-                    <th>Check-in Time</th>
-                    <th>Check-out Time</th>
+                    <th>Room Type</th>
+                    <th>Check-in Date</th>
+                    <th>Check-out Date</th>
+                    <th>Price Per Day</th>
+                    <th>Total Rooms</th> <!-- Matches data for total rooms -->
+                    <th>Available Rooms</th> <!-- Matches data for available rooms -->
+                    <th>Description</th>
+                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
+                <?php if (!empty($accommodations)): ?>
                 <?php foreach ($accommodations as $index => $accommodation): ?>
                 <tr>
                     <td><?= $index + 1; ?></td>
-                    <td><?= htmlspecialchars($accommodation['name']); ?></td>
-                    <td><?= htmlspecialchars($accommodation['trip_name']); ?></td>
-                    <td><?= htmlspecialchars($accommodation['location']); ?></td>
-                    <td>$<?= number_format($accommodation['price'], 2); ?></td>
-                    <td><?= htmlspecialchars($accommodation['amenities']); ?></td>
-                    <td><?= htmlspecialchars(date("Y-m-d h:i A", strtotime($accommodation['check_in_time']))); ?>
-                    </td>
-                    <td><?= htmlspecialchars(date("Y-m-d h:i A", strtotime($accommodation['check_out_time']))); ?>
-                    </td>
+                    <td><?= htmlspecialchars($accommodation['hotel_name']); ?></td>
+                    <td><?= htmlspecialchars($accommodation['room_type'] ?? 'N/A'); ?></td>
+                    <!-- Room type from accommodations table -->
+                    <td><?= htmlspecialchars(date("Y-m-d h:i A", strtotime($accommodation['check_in_date']))); ?></td>
+                    <td><?= htmlspecialchars(date("Y-m-d h:i A", strtotime($accommodation['check_out_date']))); ?></td>
 
+                    <?php
+                // Calculate the total price based on check-in and check-out dates
+                $checkIn = new DateTime($accommodation['check_in_date']);
+                $checkOut = new DateTime($accommodation['check_out_date']);
+                $days = $checkIn->diff($checkOut)->days;
+
+                // If check-in and check-out are the same, treat it as 1 day
+                if ($days === 0) {
+                    $days = 1;
+                }
+
+                // Total price calculation
+                $totalPrice = $days * $accommodation['price'];
+            ?>
+                    <td>$<?= number_format($totalPrice, 2); ?></td>
+                    <td><?= htmlspecialchars($accommodation['total_rooms']); ?></td> <!-- Total Rooms -->
+                    <td><?= htmlspecialchars($accommodation['available_rooms']); ?></td> <!-- Available Rooms -->
+                    <td><?= htmlspecialchars($accommodation['description'] ?? 'N/A'); ?></td>
                     <td>
-                        <a href="/user/accommodation/<?= $accommodation['id']; ?>/edit"
-                            class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
-
-                        <!-- Only keep the delete button without SweetAlert confirmation -->
-                        <a href="#" onclick="confirmDelete(<?= $accommodation['id']; ?>)"
-                            class="btn btn-sm btn-danger"> <i class="fas fa-trash"></i></a>
+                        <?php if ($accommodation['status'] == 0): ?>
+                        <span class="badge bg-success">Pending</span>
+                        <?php else: ?>
+                        <span class="badge bg-danger">Confirmed</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <!-- Delete action for accommodation -->
+                        <a href="#" onclick="confirmDelete(<?= $accommodation['id']; ?>)" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
+                <?php else: ?>
+                <tr>
+                    <td colspan="11" class="text-center">No accommodations found.</td> <!-- Updated colspan to 11 -->
+                </tr>
+                <?php endif; ?>
             </tbody>
         </table>
+
+
     </div>
     <?php else: ?>
     <div class="alert alert-warning text-center">No accommodations found.</div>
     <?php endif; ?>
+
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

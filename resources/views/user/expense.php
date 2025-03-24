@@ -47,7 +47,7 @@ include __DIR__ . '/../backend/layouts/app.php';
         .add-expense-btn {
             margin-bottom: 15px;
         }
-    </style>
+    </style>   
 
 
 

@@ -40,6 +40,7 @@
 
 <body>
 
+
     <div class="container my-5">
         <h2 class="text-center mb-4">🌍 Trip Details</h2>
         <p><strong>Total Participants:</strong> <?= $tripDetails['accepted_participants'] ?></p>
@@ -70,22 +71,22 @@
                 <div class="card shadow">
                     <div class="card-header bg-success text-white">🏨 Accommodations</div>
                     <div class="card-body">
-                        <?php if (!empty($accommodations)) : ?>
-                        <?php foreach ($accommodations as $accommodation): ?>
-                        <div class="border-bottom pb-2 mb-2">
-                            <h5 class="mb-1"><?= htmlspecialchars($accommodation['name']) ?></h5>
-                            <p class="text-muted"><?= htmlspecialchars($accommodation['location']) ?></p>
-                            <small>Check-in: <?= htmlspecialchars($accommodation['check_in_time']) ?> | Check-out:
-                                <?= htmlspecialchars($accommodation['check_out_time']) ?></small>
-                            <div class="amount text-success">$<?= htmlspecialchars($accommodation['price']) ?></div>
-                        </div>
+                        <?php if (!empty($accommodations)): ?>
+                        <?php foreach ($accommodations as $acc): ?>
+                        <p><strong>Room:</strong> <?= htmlspecialchars($acc['room_description']) ?><br>
+                            <strong>Room Type:</strong> <?= htmlspecialchars($acc['room_type']) ?><br>
+                            <strong>Dates:</strong> <?= $acc['check_in_date'] ?> to <?= $acc['check_out_date'] ?>
+                        </p>
                         <?php endforeach; ?>
-                        <?php else : ?>
-                        <p class="text-muted">No accommodations available.</p>
+                        <?php else: ?>
+                        <p>No accommodations found for this trip.</p>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
+
+
+
 
             <!-- Transportation Section -->
             <div class="col-md-6">
@@ -128,7 +129,7 @@
                         <p class="text-muted">No expenses recorded.</p>
                         <?php endif; ?>
 
-                      
+
 
 
 

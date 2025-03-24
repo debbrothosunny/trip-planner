@@ -161,19 +161,20 @@ body {
     <?php unset($_SESSION['message']); ?>
     <?php endif; ?>
 
-    <!-- Debugging: Display trips array -->
+    <!-- Display trips if available -->
     <?php if (!empty($trips)): ?>
     <div class="row">
         <?php 
-                $currentDate = new DateTime(); 
-                foreach ($trips as $trip): 
-                    $startDate = new DateTime($trip['start_date']);
-                    $endDate = new DateTime($trip['end_date']);
-                    $isExpired = $currentDate > $endDate; // Define $isExpired correctly
-
-                    // Only show 'pending' or 'accepted' trips that are not expired
-                    if (($trip['status'] === 'pending' || $trip['status'] === 'accepted') && !$isExpired): 
-            ?>
+            $currentDate = new DateTime(); 
+            foreach ($trips as $trip): 
+                $startDate = new DateTime($trip['start_date']);
+                $endDate = new DateTime($trip['end_date']);
+                $isExpired = $currentDate > $endDate; // Check if trip is expired
+        ?>
+        <?php 
+            // Only show 'pending' or 'accepted' trips that are not expired
+            if (($trip['status'] === 'pending' || $trip['status'] === 'accepted') && !$isExpired): 
+        ?>
 
         <div class="col-md-4 mb-4">
             <div class="card">
@@ -193,33 +194,24 @@ body {
                             <?= htmlspecialchars($trip['status'] ?? 'Pending') ?>
                         </span>
                     </p>
-                    <?php
-                        // Fetch payment status for the current trip and user
-                        $paymentStatus = $paymentModel->getPaymentStatus($userId, $trip['trip_id']);
-                        ?>
-                    <!-- Check Payment Status for each trip -->
-                    <?php
-                        $paymentStatus = isset($paymentStatus) ? strtolower($paymentStatus) : 'unpaid';
-                        ?>
 
-                    <!-- Countdown Logic: Calculate Remaining Time -->
+                    <!-- Payment Status -->
+                    <?php 
+                        $paymentStatus = $paymentModel->getPaymentStatus($userId, $trip['trip_id']);
+                        $paymentStatus = isset($paymentStatus) ? strtolower($paymentStatus) : 'unpaid';
+                    ?>
+
+                    <!-- Countdown Logic -->
                     <?php
-                        $startDate = new DateTime($trip['start_date']);
                         $currentDateTime = new DateTime();
                         $interval = $currentDateTime->diff($startDate);
-
                         $remainingDays = $interval->d;
                         $remainingHours = $interval->h;
                         $remainingMinutes = $interval->i;
 
-                        // Determine countdown message
-                        if ($currentDateTime < $startDate) {
-                            $countdownClass = "text-primary";
-                        } else {
-                            $countdownClass = "text-danger";
-                        }
+                        $countdownClass = ($currentDateTime < $startDate) ? "text-primary" : "text-danger";
                     ?>
-
+                    
                     <div class="analog-clock-container">
                         <div class="clock">
                             <div class="hand day-hand" id="dayHand"></div>
@@ -234,7 +226,7 @@ body {
                         </p>
                     </div>
 
-                    <!-- Check Trip Status and Payment Status -->
+                    <!-- Trip Status and Payment Status -->
                     <?php if ($trip['status'] === 'pending' && !$isExpired): ?>
                     <form method="POST" action="/participant/update-status">
                         <input type="hidden" name="trip_id" value="<?= $trip['trip_id']; ?>">
@@ -252,23 +244,18 @@ body {
                         This trip has expired. You can no longer accept or decline.
                     </div>
                     <?php else: ?>
-                    <!-- Check Payment Status -->
+                    <!-- Payment Status -->
                     <?php if ($paymentStatus === 'completed'): ?>
-                    <!-- Payment Completed -->
-                    <span class="badge bg-success">You are join our trips</span>
+                    <span class="badge bg-success">You are joined in this trip</span>
                     <?php elseif ($paymentStatus === 'pending'): ?>
-                    <!-- Payment Pending -->
                     <span class="badge bg-warning text-dark">Payment Pending</span>
-                    <!-- Show reminder for pending payment -->
                     <div class="alert alert-info mt-3" role="alert">
                         Your payment is pending. Please wait for confirmation.
                     </div>
                     <?php elseif ($paymentStatus === 'unpaid'): ?>
-                    <!-- Payment Unpaid -->
                     <div class="alert alert-warning mt-3" role="alert">
                         Please make the payment first before the trip can proceed.
                     </div>
-                    <!-- Show Make Payment Button if Trip Accepted -->
                     <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal"
                         data-bs-target="#paymentModal<?= $trip['trip_id']; ?>">Make Payment</button>
                     <?php endif; ?>
@@ -287,7 +274,6 @@ body {
                                 <div class="modal-body">
                                     <form method="POST" action="/participant/make-payment">
                                         <input type="hidden" name="trip_id" value="<?= $trip['trip_id']; ?>">
-                                        <!-- Transaction ID Field -->
                                         <div class="mb-3">
                                             <label for="transaction_id" class="form-label">Transaction ID</label>
                                             <input type="text" class="form-control" name="transaction_id"
@@ -316,6 +302,7 @@ body {
                     </div>
                     <!-- End Payment Modal -->
                     <?php endif; ?>
+                 
                 </div>
             </div>
         </div>
@@ -329,6 +316,7 @@ body {
     </div>
     <?php endif; ?>
 </div>
+
 
 
 

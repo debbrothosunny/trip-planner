@@ -55,22 +55,34 @@ class TripParticipant {
 
     public function getTripDetails($tripId) {
         try {
-            // Fetch itinerary separately
+            // Fetch itinerary
             $stmt = $this->db->prepare("SELECT * FROM trip_itineraries WHERE trip_id = :trip_id ORDER BY itinerary_date ASC");
             $stmt->execute([':trip_id' => $tripId]);
             $itinerary = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-            // Fetch accommodations separately
-            $stmt = $this->db->prepare("SELECT * FROM accommodations WHERE trip_id = :trip_id");
+         // Fetch accommodations of users in this trip
+            $stmt = $this->db->prepare("
+            SELECT 
+                u.name AS user_name,
+                a.room_type,
+                a.check_in_date,
+                a.check_out_date,
+                hr.description AS room_description
+            FROM accommodations a
+            INNER JOIN users u ON u.id = a.user_id
+            INNER JOIN hotel_rooms hr ON hr.id = a.hotel_id  -- Assuming hotel_rooms has an 'id' column
+            WHERE a.trip_id = :trip_id
+            ");
             $stmt->execute([':trip_id' => $tripId]);
             $accommodations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     
-            // Fetch transportation separately
+            // Fetch transportation
             $stmt = $this->db->prepare("SELECT * FROM transportation WHERE trip_id = :trip_id");
             $stmt->execute([':trip_id' => $tripId]);
             $transportation = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-            // Fetch expenses separately
+            // Fetch expenses
             $stmt = $this->db->prepare("SELECT * FROM trip_expenses WHERE trip_id = :trip_id ORDER BY expense_date ASC");
             $stmt->execute([':trip_id' => $tripId]);
             $expenses = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -88,9 +100,12 @@ class TripParticipant {
                 'accepted_participants' => $acceptedParticipants
             ];
         } catch (PDOException $e) {
+            error_log("Trip detail error: " . $e->getMessage());
             return [];
         }
     }
+    
+  
     
 
 

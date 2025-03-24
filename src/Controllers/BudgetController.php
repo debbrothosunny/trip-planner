@@ -41,8 +41,13 @@ class BudgetController
             $tripExpensesData = [];
     
             foreach ($trips as $trip) {
-                // Fetch Total Accommodation cost for each trip
-                $accommodationQuery = "SELECT SUM(price) AS totalAccommodation FROM accommodations WHERE trip_id = :trip_id";
+                // Fetch Total Accommodation cost for each trip from hotel_rooms
+                $accommodationQuery = "
+                    SELECT SUM(hr.price) AS totalAccommodation 
+                    FROM accommodations a
+                    INNER JOIN hotel_rooms hr ON a.hotel_id = hr.id
+                    WHERE a.trip_id = :trip_id
+                ";
                 $stmt = $this->db->prepare($accommodationQuery);
                 $stmt->bindParam(':trip_id', $trip['id'], PDO::PARAM_INT);
                 $stmt->execute();
@@ -94,21 +99,22 @@ class BudgetController
     }
     
     
+    
 
     // Method to fetch trips for the user (you can adjust this logic as per your database schema)
     private function getUserTrips($userId)
     {
         $query = "SELECT * FROM trips WHERE user_id = :user_id";  // Sample query, adjust as needed
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':user_id', $userId, \PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll();  // Returns the trips associated with the user
     }
 
-    // Method to fetch overall expenses for the user (based on trip_expenses, accommodations, and transportation tables)
 
-// Method to fetch expenses per trip for the user (based on trip_expenses, accommodations, and transportation tables)
+
+    // Method to fetch expenses per trip for the user (based on trip_expenses, accommodations, and transportation tables)
     public function getUserExpensesPerTrip($userId)
     {
         // Initialize an array to hold expenses per trip

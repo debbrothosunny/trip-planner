@@ -68,17 +68,23 @@ button {
                     <?php if ($_SESSION['role'] == 'admin'): ?>
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/admin/dashboard') !== false) ? 'active' : ''; ?>">
-                        <a href="/admin/dashboard" class="nav-link">Admin Dashboard</a>
+                        <a href="/admin/dashboard" class="nav-link">Dashboard</a>
                     </li>
+
                     <li
-                        class="nav-item <?php echo (strpos($currentUrl, '/admin/delete/' . $_SESSION['user_id']) !== false) ? 'active' : ''; ?>">
-                        <a href="/admin/delete/<?php echo $_SESSION['user_id']; ?>" class="nav-link">Delete User</a>
+                        class="nav-item <?php echo (strpos($currentUrl, '/admin/hotels') !== false) ? 'active' : ''; ?>">
+                        <a href="/admin/hotels" class="nav-link">Hotel</a>
                     </li>
+
                     <li
-                        class="nav-item <?php echo (strpos($currentUrl, '/admin/user/' . $_SESSION['user_id'] . '/trips') !== false) ? 'active' : ''; ?>">
-                        <a href="/admin/user/<?php echo $_SESSION['user_id']; ?>/trips" class="nav-link">View User
-                            Trips</a>
+                        class="nav-item <?php echo (strpos($currentUrl, '/admin/hotels/rooms') !== false) ? 'active' : ''; ?>">
+                        <a href="/admin/hotels/rooms" class="nav-link">Hotel Room</a>
                     </li>
+                    
+                    
+
+
+                   
                     <?php elseif ($_SESSION['role'] == 'user'): ?>
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/user/dashboard') !== false) ? 'active' : ''; ?>">

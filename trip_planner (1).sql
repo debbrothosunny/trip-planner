@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 19, 2025 at 09:28 AM
+-- Generation Time: Mar 24, 2025 at 07:23 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -29,24 +29,73 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `accommodations` (
   `id` int(11) NOT NULL,
-  `trip_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `location` varchar(255) NOT NULL,
-  `price` decimal(10,2) NOT NULL,
-  `amenities` text DEFAULT NULL,
-  `check_in_time` time NOT NULL,
-  `check_out_time` time NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `hotel_id` int(11) NOT NULL,
+  `room_type` varchar(255) NOT NULL,
+  `check_in_date` date NOT NULL,
+  `check_out_date` date NOT NULL,
+  `status` varchar(50) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `user_id` int(11) NOT NULL
+  `trip_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `accommodations`
 --
 
-INSERT INTO `accommodations` (`id`, `trip_id`, `name`, `location`, `price`, `amenities`, `check_in_time`, `check_out_time`, `created_at`, `updated_at`, `user_id`) VALUES
-(51, 16, 'Fairmont Royal York', 'Toronto, Canada', 250.00, 'Free Wi-Fi, Pool, Gym, Breakfast', '00:16:00', '22:16:00', '2025-03-05 18:16:15', '2025-03-05 18:16:15', 3);
+INSERT INTO `accommodations` (`id`, `user_id`, `hotel_id`, `room_type`, `check_in_date`, `check_out_date`, `status`, `created_at`, `updated_at`, `trip_id`) VALUES
+(3, 3, 1, 'Delux', '2025-03-25', '2025-03-26', '0', '2025-03-24 18:04:25', '2025-03-24 18:09:39', 23);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hotels`
+--
+
+CREATE TABLE `hotels` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `location` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hotels`
+--
+
+INSERT INTO `hotels` (`id`, `name`, `location`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'Fairmont Royal York', ' USA', 'N/A', '2025-03-21 18:23:46', '2025-03-21 18:24:40'),
+(2, 'Rose View ', 'Sylhet', 'N/A', '2025-03-22 07:33:00', '2025-03-22 07:33:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hotel_rooms`
+--
+
+CREATE TABLE `hotel_rooms` (
+  `id` int(11) NOT NULL,
+  `hotel_id` int(11) NOT NULL,
+  `room_type` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `total_rooms` int(11) NOT NULL,
+  `available_rooms` int(11) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hotel_rooms`
+--
+
+INSERT INTO `hotel_rooms` (`id`, `hotel_id`, `room_type`, `price`, `total_rooms`, `available_rooms`, `description`, `created_at`, `updated_at`) VALUES
+(1, 1, 'AC but Single Bed', 500.00, 100, 100, 'Facilities: WiFi, Air Conditioning, Television.', '2025-03-20 09:27:02', '2025-03-23 12:21:39'),
+(4, 2, 'Single Bed', 10.99, 100, 100, 'N/A', '2025-03-22 12:49:44', '2025-03-22 12:49:44'),
+(5, 1, 'Delux', 800.00, 100, 100, 'N/A', '2025-03-23 16:32:27', '2025-03-24 13:40:06');
 
 -- --------------------------------------------------------
 
@@ -97,7 +146,8 @@ CREATE TABLE `transportation` (
 --
 
 INSERT INTO `transportation` (`id`, `trip_id`, `type`, `company_name`, `departure_location`, `arrival_location`, `departure_date`, `arrival_date`, `booking_reference`, `user_id`, `amount`) VALUES
-(5, 16, 'Flight', 'Air Canada	', 'New York, USA', 'Toronto, Canada', '2025-03-10 00:00:00', '2025-03-16 00:00:00', 'AC12345', 3, 4000.00);
+(5, 16, 'Flight', 'Air Canada	', 'New York, USA', 'Toronto, Canada', '2025-03-10 00:00:00', '2025-03-16 00:00:00', 'AC12345', 3, 4000.00),
+(6, 23, 'Flight', 'Japan Airlines', 'New York', 'London', '2025-03-24 00:00:00', '2025-03-25 00:00:00', 'ABC', 3, 1400.00);
 
 -- --------------------------------------------------------
 
@@ -119,7 +169,7 @@ CREATE TABLE `trips` (
 --
 
 INSERT INTO `trips` (`id`, `name`, `user_id`, `start_date`, `end_date`, `budget`) VALUES
-(23, 'Japan Summer Trip 2025\"', 3, '2025-03-22', '2025-03-31', 20000.00),
+(23, 'Japan Summer Trip 2025\"', 3, '2025-03-26', '2025-03-31', 20000.00),
 (25, 'Canada Winter Trip 2025', 6, '2025-04-01', '2025-04-20', 25000.00);
 
 -- --------------------------------------------------------
@@ -144,7 +194,8 @@ CREATE TABLE `trip_expenses` (
 --
 
 INSERT INTO `trip_expenses` (`id`, `user_id`, `trip_id`, `category`, `amount`, `currency`, `description`, `expense_date`) VALUES
-(20, 3, 16, 'Transport', 750.00, 'USD', 'Fairmont Royal York Hotel', '2025-03-07');
+(20, 3, 16, 'Transport', 750.00, 'USD', 'Fairmont Royal York Hotel', '2025-03-07'),
+(21, 3, 23, 'Accommodation', 100.00, 'USD', 'N/A', '2025-03-25');
 
 -- --------------------------------------------------------
 
@@ -182,8 +233,7 @@ CREATE TABLE `trip_itineraries` (
 --
 
 INSERT INTO `trip_itineraries` (`id`, `trip_id`, `day_title`, `location`, `description`, `itinerary_date`, `created_at`, `updated_at`) VALUES
-(3, 16, ' Day 1: Vancouver', 'Vancouver, British Columbia', 'Explore Vancouver\'s vibrant cultural scene, including Indigenous art galleries and cultural centers.', '2025-03-17', '2025-02-27 21:17:07', '2025-03-05 18:07:02'),
-(6, 16, 'Day:2 Whistler', 'Explore Whistler Village and engage in outdoor activities.', 'Whistler, British Columbia', '2025-03-16', '2025-03-05 18:07:41', '2025-03-05 18:07:52');
+(1, 23, 'Day 1: Arrival at Beach Resort', 'Beach Resort, Maldives', 'Arrive at the Maldives, relax on the beach, and enjoy water sports.', '2025-03-19', '2025-03-20 09:30:43', '2025-03-20 09:30:43');
 
 -- --------------------------------------------------------
 
@@ -206,8 +256,10 @@ CREATE TABLE `trip_participants` (
 --
 
 INSERT INTO `trip_participants` (`id`, `trip_id`, `user_id`, `status`, `responded_at`, `created_at`, `updated_at`) VALUES
-(3, 23, 7, 'accepted', '2025-03-18 18:24:36', '2025-03-18 17:24:36', '2025-03-18 12:24:36'),
-(4, 23, 9, 'accepted', '2025-03-19 07:51:50', '2025-03-19 06:51:50', '2025-03-19 01:51:50');
+(3, 23, 7, 'accepted', '2025-03-18 18:24:36', '2025-03-18 17:24:36', '2025-03-19 14:14:22'),
+(4, 23, 9, 'accepted', '2025-03-19 07:51:50', '2025-03-19 06:51:50', '2025-03-19 14:14:01'),
+(5, 25, 9, 'pending', '2025-03-19 15:58:38', '2025-03-19 14:58:38', '2025-03-19 14:59:05'),
+(6, 25, 7, 'pending', '2025-03-24 11:41:43', '2025-03-24 10:41:43', '2025-03-24 10:42:20');
 
 -- --------------------------------------------------------
 
@@ -276,7 +328,22 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`, `i
 --
 ALTER TABLE `accommodations`
   ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `hotel_id` (`hotel_id`),
   ADD KEY `trip_id` (`trip_id`);
+
+--
+-- Indexes for table `hotels`
+--
+ALTER TABLE `hotels`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `hotel_rooms`
+--
+ALTER TABLE `hotel_rooms`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `hotel_id` (`hotel_id`);
 
 --
 -- Indexes for table `payments`
@@ -354,7 +421,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `accommodations`
 --
 ALTER TABLE `accommodations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `hotels`
+--
+ALTER TABLE `hotels`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `hotel_rooms`
+--
+ALTER TABLE `hotel_rooms`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -366,7 +445,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `transportation`
 --
 ALTER TABLE `transportation`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `trips`
@@ -378,7 +457,7 @@ ALTER TABLE `trips`
 -- AUTO_INCREMENT for table `trip_expenses`
 --
 ALTER TABLE `trip_expenses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `trip_invitations`
@@ -396,7 +475,7 @@ ALTER TABLE `trip_itineraries`
 -- AUTO_INCREMENT for table `trip_participants`
 --
 ALTER TABLE `trip_participants`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `trip_reviews`
@@ -418,7 +497,15 @@ ALTER TABLE `users`
 -- Constraints for table `accommodations`
 --
 ALTER TABLE `accommodations`
-  ADD CONSTRAINT `accommodations_ibfk_1` FOREIGN KEY (`trip_id`) REFERENCES `trips` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `accommodations_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `accommodations_ibfk_2` FOREIGN KEY (`hotel_id`) REFERENCES `hotels` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `accommodations_ibfk_3` FOREIGN KEY (`trip_id`) REFERENCES `trips` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `hotel_rooms`
+--
+ALTER TABLE `hotel_rooms`
+  ADD CONSTRAINT `hotel_rooms_ibfk_1` FOREIGN KEY (`hotel_id`) REFERENCES `hotels` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `payments`

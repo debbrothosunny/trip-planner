@@ -16,59 +16,22 @@
     <div class="container mt-5">
         <h2>Edit Accommodation</h2>
 
-        <?php if (isset($_GET['error']) && $_GET['error'] == 'update_failed'): ?>
-        <div class="alert alert-danger">Failed to update the accommodation. Please try again.</div>
-        <?php endif; ?>
+        <?php if (isset($_SESSION['sweetalert'])): ?>
+        <div class="alert alert-<?php echo $_SESSION['sweetalert']['icon'] == 'error' ? 'danger' : 'success'; ?>">
+            <?php echo $_SESSION['sweetalert']['text']; ?>
+        </div>
+        <?php unset($_SESSION['sweetalert']); endif; ?>
 
         <form action="/user/accommodation/update/<?= htmlspecialchars($accommodation['id']); ?>" method="POST">
 
             <div class="mb-3">
-                <label for="trip_id" class="form-label">Trip Name</label>
-                <select class="form-select" id="trip_id" name="trip_id" required>
-                    <option value="" disabled>Select Trip</option>
-                    <?php foreach ($trips as $trip): ?>
-                    <option value="<?php echo $trip['id']; ?>"
-                        <?php echo ($trip['id'] == $accommodation['trip_id']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($trip['name']); ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
+                <label for="check_in_date" class="form-label">Check-in Date</label>
+                <input type="date" class="form-control" name="check_in_date" value="<?= htmlspecialchars($accommodation['check_in_date']); ?>" required>
             </div>
 
             <div class="mb-3">
-                <label for="name" class="form-label">Hotel Name</label>
-                <input type="text" class="form-control" name="name"
-                    value="<?= htmlspecialchars($accommodation['name']); ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="location" class="form-label">Location</label>
-                <input type="text" class="form-control" name="location"
-                    value="<?= htmlspecialchars($accommodation['location']); ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="price" class="form-label">Price</label>
-                <input type="number" step="0.01" class="form-control" name="price"
-                    value="<?= htmlspecialchars($accommodation['price']); ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="amenities" class="form-label">Amenities</label>
-                <input type="text" class="form-control" name="amenities"
-                    value="<?= htmlspecialchars($accommodation['amenities']); ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="check_in_time" class="form-label">Check-in Time</label>
-                <input type="time" class="form-control" name="check_in_time"
-                    value="<?= htmlspecialchars($accommodation['check_in_time']); ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="check_out_time" class="form-label">Check-out Time</label>
-                <input type="time" class="form-control" name="check_out_time"
-                    value="<?= htmlspecialchars($accommodation['check_out_time']); ?>" required>
+                <label for="check_out_date" class="form-label">Check-out Date</label>
+                <input type="date" class="form-control" name="check_out_date" value="<?= htmlspecialchars($accommodation['check_out_date']); ?>" required>
             </div>
 
             <div class="d-flex justify-content-between">
