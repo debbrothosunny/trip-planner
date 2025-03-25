@@ -10,6 +10,24 @@ Users can view which participants have joined their trips.
 Admins have full visibility over all trips and can see which participants have joined each trip.
 
 
+--------------Login and register system--------------
+
+The project includes a login and registration system. After cloning the project, it can be run using the Visual Studio Code terminal by executing the command:
+
+php -S localhost:8000 -t public
+
+Three types of user accounts are available for testing:
+
+Admin: debnathsunny7852@gmail.com
+
+User: purnadebosree@gmail.com
+
+Participant: po52211@hartaria.com
+
+The registration process includes email verification to ensure user authenticity.
+
+
+
 -----------11-03-2025----------------
 
 Once a participant accepts a trip, they are restricted from accepting any other trips that overlap with the selected trip’s start and end dates.

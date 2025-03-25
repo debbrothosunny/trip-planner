@@ -180,12 +180,14 @@ class Accommodation {
                  h.description AS hotel_description,
                  r.room_type,
                  r.price,
+                 r.total_rooms AS hotel_total_rooms,  -- ✅ Hotel room total_rooms
+                 r.available_rooms,                    -- ✅ Optionally include available_rooms
                  r.description AS room_description
              FROM accommodations a
              JOIN users u ON a.user_id = u.id
              JOIN hotels h ON a.hotel_id = h.id
              JOIN hotel_rooms r 
-                 ON r.hotel_id = a.hotel_id AND r.room_type = a.room_type  -- Fix: join only the booked room type
+                 ON r.hotel_id = a.hotel_id AND r.room_type = a.room_type
              WHERE a.status = '0'
          ";
      
@@ -193,6 +195,8 @@ class Accommodation {
          $stmt->execute();
          return $stmt->fetchAll(PDO::FETCH_ASSOC);
      }
+     
+     
      
      
      
