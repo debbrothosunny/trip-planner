@@ -96,7 +96,7 @@
     </style>
 </head>
 
-<body>  
+<body>
 
     <!-- Sidebar -->
     <div class="sidebar d-flex flex-column p-3">
@@ -194,50 +194,75 @@
                         <thead>
                             <tr>
                                 <th>Trip Name</th>
-                                <th>Participants</th>
+                                <th>Participant</th>
+                                <th>Trip Status</th>
+                                <th>Payment Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($data['trips'] as $trip): ?>
+                            <?php 
+                        $participants = $data['participants'][$trip['id']] ?? [];
+                        $rowspan = max(count($participants), 1);
+                        $firstRow = true;
+                    ?>
+
+                            <?php if (!empty($participants)): ?>
+                            <?php foreach ($participants as $participant): ?>
                             <tr>
-                                <td class="fw-bold"><?= htmlspecialchars($trip['name']) ?></td>
+                                <?php if ($firstRow): ?>
+                                <td class="fw-bold" rowspan="<?= $rowspan ?>">
+                                    <?= htmlspecialchars($trip['name']) ?>
+                                </td>
+                                <?php $firstRow = false; ?>
+                                <?php endif; ?>
+
+                                <td><?= htmlspecialchars($participant['user_name']) ?></td>
+
                                 <td>
-                                    <?php if (!empty($data['participants'][$trip['id']])): ?>
-                                    <div class="list-group">
-                                        <?php foreach ($data['participants'][$trip['id']] as $participant): ?>
-                                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                                            <span><?= htmlspecialchars($participant['user_name']) ?></span>
-                                            <span
-                                                class="badge <?= $participant['trip_status'] == 'accepted' ? 'bg-success' : 'bg-warning' ?>">
-                                                <?= htmlspecialchars($participant['trip_status']) ?>
-                                            </span>
+                                    <span
+                                        class="badge <?= $participant['trip_status'] == 'accepted' ? 'bg-success' : 'bg-warning' ?>">
+                                        <?= htmlspecialchars($participant['trip_status']) ?>
+                                    </span>
+                                </td>
 
-                                            <?php if ($participant['payment_status'] === 'completed' && isset($participant['amount'])): ?>
-                                            <a href="javascript:void(0)" class="btn btn-primary btn-sm"
-                                                onclick="loadPaymentDetails(<?= $trip['id'] ?>, <?= $participant['user_id'] ?>)">
-                                                <i class="fas fa-receipt"></i> Details
-                                            </a>
-                                            <?php endif; ?>
+                                <td>
+                                    <span
+                                        class="badge <?= $participant['payment_status'] === 'completed' ? 'bg-success' : 'bg-danger' ?>">
+                                        <?= htmlspecialchars($participant['payment_status']) ?>
+                                    </span>
+                                </td>
 
-                                            <?php if ($participant['trip_status'] === 'accepted' && $participant['payment_status'] === 'pending'): ?>
-                                            <a href="/admin/accept-payment/<?= $trip['id'] ?>/<?= $participant['user_id'] ?>"
-                                                class="btn btn-success btn-sm">
-                                                <i class="fas fa-check-circle"></i> Accept Payment
-                                            </a>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <?php else: ?>
-                                    <span class="text-muted">No participants</span>
+                                <td>
+                                    <?php if ($participant['payment_status'] === 'completed' && isset($participant['amount'])): ?>
+                                    <a href="javascript:void(0)" class="btn btn-primary btn-sm"
+                                        onclick="loadPaymentDetails(<?= $trip['id'] ?>, <?= $participant['user_id'] ?>)">
+                                        <i class="fas fa-receipt"></i> Details
+                                    </a>
+                                    <?php endif; ?>
+
+                                    <?php if ($participant['trip_status'] === 'accepted' && $participant['payment_status'] === 'pending'): ?>
+                                    <a href="/admin/accept-payment/<?= $trip['id'] ?>/<?= $participant['user_id'] ?>"
+                                        class="btn btn-success btn-sm">
+                                        <i class="fas fa-check-circle"></i> Accept Payment
+                                    </a>
                                     <?php endif; ?>
                                 </td>
                             </tr>
+                            <?php endforeach; ?>
+                            <?php else: ?>
+                            <tr>
+                                <td class="fw-bold"><?= htmlspecialchars($trip['name']) ?></td>
+                                <td colspan="4"><span class="text-muted">No participants</span></td>
+                            </tr>
+                            <?php endif; ?>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </div>
 
