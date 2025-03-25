@@ -75,7 +75,8 @@ class HotelRoom {
     }
 
 
-    public function decreaseAvailableRooms($hotelId, $roomType, $totalRooms)
+
+    public function decreaseAvailableAndTotalRooms($hotelId, $roomType, $totalRooms)
     {
         // First, get the current total_rooms and available_rooms to make sure they are correct
         $sql = "
@@ -91,23 +92,28 @@ class HotelRoom {
     
         // Check if we have room data
         if ($roomData) {
-            // Calculate the new available_rooms after booking
             $newAvailableRooms = $roomData['available_rooms'] - $totalRooms;
+            $newTotalRooms = $roomData['total_rooms'] - $totalRooms;
     
-            // Ensure that available_rooms cannot go below zero
+            // Ensure that the available and total rooms cannot go below zero
             if ($newAvailableRooms < 0) {
                 $newAvailableRooms = 0;
             }
+            if ($newTotalRooms < 0) {
+                $newTotalRooms = 0;
+            }
     
-            // Update only available_rooms (do not change total_rooms)
+            // Now update the hotel_rooms table with the new values
             $updateSql = "
                 UPDATE hotel_rooms
-                SET available_rooms = :newAvailableRooms
+                SET available_rooms = :newAvailableRooms,
+                    total_rooms = :newTotalRooms
                 WHERE hotel_id = :hotelId AND room_type = :roomType
             ";
     
             $stmt = $this->db->prepare($updateSql);
             $stmt->bindParam(':newAvailableRooms', $newAvailableRooms, PDO::PARAM_INT);
+            $stmt->bindParam(':newTotalRooms', $newTotalRooms, PDO::PARAM_INT);
             $stmt->bindParam(':hotelId', $hotelId, PDO::PARAM_INT);
             $stmt->bindParam(':roomType', $roomType, PDO::PARAM_STR);
             $stmt->execute();
@@ -116,7 +122,6 @@ class HotelRoom {
             throw new Exception("Room data not found for hotel_id: $hotelId and room_type: $roomType");
         }
     }
-    
     
 
 }

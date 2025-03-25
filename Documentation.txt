@@ -18,11 +18,11 @@ php -S localhost:8000 -t public
 
 Three types of user accounts are available for testing:
 
-Admin: debnathsunny7852@gmail.com
+Admin: debnathsunny7852@gmail.com password:123456
 
-User: purnadebosree@gmail.com
+User: purnadebosree@gmail.com password:123456
 
-Participant: po52211@hartaria.com
+Participant: po52211@hartaria.com password:123456
 
 The registration process includes email verification to ensure user authenticity.
 

@@ -188,25 +188,24 @@ class HotelController {
         $hotelId = $_POST['hotel_id'];
         $roomType = $_POST['room_type'];
         $totalRooms = $_POST['total_rooms'];  // Number of rooms booked
-        
+    
         // Step 2: Update the accommodation status to '1' (confirmed)
         $this->accommodationModel->confirmAccommodation($accommodationId);
-        
-        // Step 3: Decrease the available rooms in hotel_rooms (only available rooms should decrease)
-        $this->hotelRoomModel->decreaseAvailableRooms($hotelId, $roomType, $totalRooms);
-        
+    
+        // Step 3: Decrease the available and total rooms in the hotel_rooms table
+        $this->hotelRoomModel->decreaseAvailableAndTotalRooms($hotelId, $roomType, $totalRooms);
+    
         // Step 4: Set a success message in the session for SweetAlert
         $_SESSION['sweetalert'] = [
             'title' => 'Booking Confirmed',
             'text' => 'Booking has been confirmed and rooms updated.',
             'icon' => 'success'
         ];
-        
+    
         // Step 5: Redirect the user back to the hotel bookings page
         header("Location: /admin/hotel-bookings");
         exit();
     }
-    
     
     
 
