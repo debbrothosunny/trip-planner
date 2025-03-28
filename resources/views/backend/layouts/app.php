@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?php echo isset($header_title) ? $header_title : 'Dashboard'; ?> - University</title>
+    <title><?php echo isset($header_title) ? $header_title : 'Dashboard'; ?> -</title>
 
     <!-- Google Font: Poppins -->
     <link rel="stylesheet"
