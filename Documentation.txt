@@ -90,3 +90,4 @@ Initially, when the user creates accommodation, the status will be marked as "pe
 ******Future Scope: AI-Based Recommendation System (Exploration Phase)****************
 
 My next concept involves integrating AI-based recommendations. While this feature is currently being explored, it has not yet been implemented in the system.
+

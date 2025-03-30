@@ -123,8 +123,8 @@
             <button type="submit" class="btn btn-primary btn-custom">Update Transportation</button>
         </form>
 
-        <div class="text-center mt-3">
-            <a href="/user/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+        <div class="text-center mt-3"> 
+            <a href="/user/transportation" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>
 

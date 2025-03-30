@@ -109,6 +109,7 @@ use App\Controllers\HotelController;
     // User Routes
     $router->addGroup('/user', function (RouteCollector $router) {
         $router->addRoute('GET', '/dashboard', [UserController::class, 'dashboard']);
+        $router->addRoute('GET', '/view-trip', [UserController::class, 'viewTrips']);
         $router->addRoute('GET', '/create-trip', [UserController::class, 'showCreateTripForm']);
         $router->addRoute('POST', '/create-trip', [UserController::class, 'createTrip']);
         $router->addRoute('GET', '/my-trips', [UserController::class, 'myTrips']);

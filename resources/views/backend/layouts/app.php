@@ -71,6 +71,8 @@ button {
                         <a href="/admin/dashboard" class="nav-link">Dashboard</a>
                     </li>
 
+                    
+
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/admin/hotels') !== false) ? 'active' : ''; ?>">
                         <a href="/admin/hotels" class="nav-link">Hotel</a>
@@ -81,27 +83,34 @@ button {
                         <a href="/admin/hotels/rooms" class="nav-link">Hotel Room</a>
                     </li>
                     
-                    
-
-
+                
                    
                     <?php elseif ($_SESSION['role'] == 'user'): ?>
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/user/dashboard') !== false) ? 'active' : ''; ?>">
-                        <a href="/user/dashboard" class="nav-link">Trip</a>
+                        <a href="/user/dashboard" class="nav-link">Dashboard</a>
                     </li>
+
+                    <li
+                        class="nav-item <?php echo (strpos($currentUrl, '/user/view-trip') !== false) ? 'active' : ''; ?>">
+                        <a href="/user/view-trip" class="nav-link">Trip</a>
+                    </li>
+
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/user/transportation') !== false) ? 'active' : ''; ?>">
                         <a href="/user/transportation" class="nav-link">Transportation</a>
                     </li>
+
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/user/accommodation') !== false) ? 'active' : ''; ?>">
                         <a href="/user/accommodation" class="nav-link">Accommodation</a>
                     </li>
+
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/user/expense') !== false) ? 'active' : ''; ?>">
                         <a href="/user/expense" class="nav-link">Expense</a>
                     </li>
+
                     <li
                         class="nav-item <?php echo (strpos($currentUrl, '/user/budget-view') !== false) ? 'active' : ''; ?>">
                         <a href="/user/budget-view" class="nav-link">Budget Track</a>

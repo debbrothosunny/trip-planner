@@ -32,7 +32,7 @@
             </button>
         </div>
         <div class="text-center mt-3">
-            <a href="/user/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+            <a href="/user/profile" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>
 
@@ -72,7 +72,6 @@
             </div>
         </div>
     </div>
-
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 

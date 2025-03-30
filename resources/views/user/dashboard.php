@@ -1,5 +1,5 @@
 <?php
-$header_title = "Trip";
+$header_title = "Dashboard";
 $content = __DIR__ . '/dashboard.php'; // Load actual content
 include __DIR__ . '/../backend/layouts/app.php';
 ?>
@@ -7,6 +7,8 @@ include __DIR__ . '/../backend/layouts/app.php';
 <style>
 body {
     display: flex;
+    background-color: #121212;
+    color: #f5f5f5;
 
 }
 
@@ -17,7 +19,7 @@ body {
     height: 100vh;
     position: fixed;
     padding-top: 20px;
-}  
+}
 
 .sidebar a {
     color: white;
@@ -42,54 +44,93 @@ body {
     padding: 20px;
     width: 100%;
 }
+
+
+
+
+
+.card {
+    background-color: #1f1f1f !important;
+    border: none;
+
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(255, 255, 255, 0.02);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 10px rgba(0, 0, 0, 0.6), 0 6px 12px rgba(255, 255, 255, 0.03);
+}
+
+.card .card-title {
+    color: #f5f5f5;
+    font-weight: 600;
+}
+
+.card .card-text {
+    color: #ffffff;
+}
+
+.btn {
+    border-radius: 0.5rem;
+}
+
+.table {
+    background-color:rgb(92, 60, 60);
+    color: #f5f5f5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table th {
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+
+.table td {
+    background-color: #1f1f1f;
+    color: #f5f5f5;
+}
+
+
 </style>
 
 
 
 
 
-<div class="content">  
-    <div class="container mt-4">
-        <h2 class="mb-3">Trip Dashboard</h2>
-        <a href="/user/create-trip" class="btn btn-success mb-3">+ Add New Trip</a>
+<div class="content">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Trips</h5>
+                    <p class="card-text fs-4"><?= count($trips) ?></p>
+                </div>
+            </div>
+        </div>
+       
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Ongoing Trips</h5>
+                    <p class="card-text fs-4">
+                        <?= count(array_filter($trips, fn($t) => strtotime($t['start_date']) <= time() && strtotime($t['end_date']) >= time())) ?>
+                    </p>
+                </div>
+            </div>
+        </div>
 
-        <?php if ($isNewUser): ?>
-        <div class="alert alert-info">Welcome! Start by creating your first trip.</div>
-        <?php elseif (!empty($trips)): ?>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Trip Name</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Budget</th> 
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($trips as $trip): ?>
-                <tr>
-                    <td><?= $trip['id']; ?></td>
-                    <td><?= htmlspecialchars($trip['name']); ?></td>
-                    <td><?= $trip['start_date']; ?></td>
-                    <td><?= $trip['end_date']; ?></td>
-                    <td>$<?= number_format($trip['budget'], 2); ?></td>
-                    <td class="d-flex justify-content-center">
-                        <a href="/user/trip/<?= $trip['id']; ?>/edit" class="btn btn-warning btn-sm me-2">Edit</a>
-                        <a href="/trip/<?= $trip['id'] ?>/itinerary" class="btn btn-success btn-sm me-2">Trip
-                            Itinerary</a>
-                        <!-- <a href="/user/trip/<?= $trip['id']; ?>/invitation/send" class="btn btn-primary btn-sm me-2">Send Invitation</a> -->
-                        <a href="/user/trip/delete/<?= $trip['id']; ?>" class="btn btn-danger btn-sm"
-                            onclick="return confirm('Are you sure?');">Delete</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        <?php else: ?>
-        <div class="alert alert-warning">No trips found.</div>
-        <?php endif; ?>
+        <div class="col-md-3">
+            <div class="card text-white bg-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Completed Trips</h5>
+                    <p class="card-text fs-4">
+                        <?= count(array_filter($trips, fn($t) => strtotime($t['end_date']) < time())) ?>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

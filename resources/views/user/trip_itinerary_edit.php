@@ -40,7 +40,7 @@
 
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-success">Update Itinerary</button>
-                        <a href="/user/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+                        <a href="/user/view-trip" class="btn btn-outline-secondary">Back</a>
                     </div>
                 </form>
             </div>

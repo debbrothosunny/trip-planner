@@ -103,6 +103,9 @@
                     </div>
 
                 </form>
+                <div class="text-center mt-3">
+                    <a href="/user/accommodation" class="btn btn-outline-secondary">Back</a>
+                </div>
             </div>
         </div>
 

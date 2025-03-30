@@ -38,7 +38,7 @@ include __DIR__ . '/../backend/layouts/app.php';
             </div>
 
             <div class="text-center mt-3">
-                <a href="/user/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+                <a href="/user/view-trip" class="btn btn-outline-secondary">Back</a>
             </div>
         </div>
     </div>

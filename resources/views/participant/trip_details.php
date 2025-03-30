@@ -64,7 +64,7 @@
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
+            </div>  
 
             <!-- Accommodations Section -->
             <div class="col-md-6">

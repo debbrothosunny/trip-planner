@@ -35,23 +35,16 @@ class UserController
          // ✅ Initialize the User model
          $this->user = new User();
     }
-    
     public function dashboard()
     {
         session_start();
 
-        // Check if user is logged in
         if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'user') {
             header("Location: /login");
             exit();
         }
 
         $user_id = $_SESSION['user']['id'];
-
-        // Ensure database connection exists
-        if (!$this->pdo) {
-            die("Database connection is not initialized.");
-        }
 
         // Fetch user's name
         $stmt = $this->pdo->prepare("SELECT name FROM users WHERE id = :id");
@@ -61,11 +54,13 @@ class UserController
 
         $user_name = $user ? $user['name'] : 'Guest';
 
-        // Fetch user's trips
+        // ✅ Fetch all trips for the logged-in user
         $trips = $this->trip->getTripsByUserId($user_id);
 
-        // ✅ Check if user is new (i.e., no trips)
-        $isNewUser = empty($trips);
+        // ✅ Calculate trip statistics
+        $totalTrips = count($trips);
+        $ongoingTrips = count(array_filter($trips, fn($t) => strtotime($t['start_date']) <= time() && strtotime($t['end_date']) >= time()));
+        $completedTrips = count(array_filter($trips, fn($t) => strtotime($t['end_date']) < time()));
 
         // ✅ Load the dashboard view
         $dashboardViewPath = __DIR__ . '/../../resources/views/user/dashboard.php';
@@ -75,6 +70,10 @@ class UserController
             echo "User dashboard view not found!";
         }
     }
+
+    
+
+
 
     // user Profile Upade Logic
     public function showProfile() {
@@ -193,19 +192,31 @@ class UserController
     }
     
     
-    
-    
-    
-    
-
-
-    
-    
-    
-
-
 
     // Show the create trip form
+
+
+    public function viewTrips()
+    {
+        session_start();
+
+        $user_id = $_SESSION['user']['id'];
+
+        // Get trips created by the user
+        $trips = $this->trip->getTripsByUserId($user_id);
+
+        // Check if user is new (no trips)
+        $isNewUser = empty($trips);
+
+        // Load the trip view page
+        $tripViewPath = __DIR__ . '/../../resources/views/user/view_trip.php';
+        if (file_exists($tripViewPath)) {
+            include $tripViewPath;
+        } else {
+            echo "Trip view page not found!";
+        }
+    }
+
     public function showCreateTripForm()
     {
         session_start();

@@ -1,6 +1,4 @@
 <?php
-
-$content = __DIR__ . '/dashboard.php'; // Load actual content
 include __DIR__ . '/../backend/layouts/app.php';
 ?>
 <style>
@@ -136,7 +134,7 @@ body {
 
         </table>
         <div class="text-center mt-3">
-            <a href="/user/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+            <a href="/user/view-trip" class="btn btn-outline-secondary">Back</a>  
         </div>
     </div>
 
