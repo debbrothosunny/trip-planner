@@ -127,19 +127,5 @@ include __DIR__ . '/../backend/layouts/app.php';
         </script>";
         unset($_SESSION['success']);
     }
-
-    if (isset($_SESSION['error'])) {
-        echo "<script>
-            Swal.fire({
-                title: 'Error!',
-                text: '{$_SESSION['error']}',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            }).then(function() {
-                window.location.href = '/user/expense';
-            });
-        </script>";
-        unset($_SESSION['error']);
-    }
     ?>
 
