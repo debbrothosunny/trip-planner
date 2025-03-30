@@ -105,7 +105,7 @@ body {
                 icon: 'success',
                 confirmButtonText: 'OK'
             }).then(function() {
-                window.location.href = '/user/dashboard';
+                window.location.href = '/user/view-trip';
             });
         </script>";
         unset($_SESSION['success']);
@@ -119,7 +119,7 @@ body {
                 icon: 'error',
                 confirmButtonText: 'OK'
             }).then(function() {
-                window.location.href = '/user/dashboard';
+                window.location.href = '/user/view-trip';
             });
         </script>";
         unset($_SESSION['error']);

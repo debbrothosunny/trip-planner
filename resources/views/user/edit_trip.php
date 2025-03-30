@@ -1,5 +1,4 @@
 <?php
-$content = __DIR__ . '/dashboard.php'; // Load actual content
 include __DIR__ . '/../backend/layouts/app.php';
 ?>
 
@@ -60,8 +59,8 @@ if (isset($_SESSION['success'])) {
                 icon: 'success',
                 confirmButtonText: 'OK'
             }).then(function() {
-                // Optional: Redirect after success alert closes (if needed)
-                // window.location.href = '/user/dashboard'; // Uncomment if you want to redirect
+                Optional: Redirect after success alert closes (if needed)
+                window.location.href = '/user/view-trip'; // Uncomment if you want to redirect
             });
         });
     </script>";
@@ -77,8 +76,8 @@ if (isset($_SESSION['error'])) {
                 icon: 'error',
                 confirmButtonText: 'OK'
             }).then(function() {
-                // Optional: Redirect after error alert closes (if needed)
-                // window.location.href = '/user/dashboard'; // Uncomment if you want to redirect
+                Optional: Redirect after error alert closes (if needed)
+                window.location.href = '/user/view-trip'; // Uncomment if you want to redirect
             });
         });
     </script>";

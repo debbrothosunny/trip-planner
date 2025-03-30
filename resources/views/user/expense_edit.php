@@ -7,6 +7,8 @@
     <title>Edit Expense</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -17,7 +19,7 @@
         <form action="/user/expense/update/<?php echo htmlspecialchars($expense['id']); ?>" method="POST">
             <input type="hidden" name="expense_id" value="<?php echo htmlspecialchars($expense['id']); ?>">
 
-            <!-- Trip ID -->
+            <!-- Trip ID -->  
             <div class="mb-3">
                 <label for="trip_id" class="form-label">Trip</label>
                 <select class="form-select" id="trip_id" name="trip_id" required>
@@ -59,7 +61,6 @@
                 <label for="currency" class="form-label">Currency</label>
                 <select class="form-control" id="currency" name="currency" required>
                     <option value="USD" <?php echo ($expense['currency'] == 'USD') ? 'selected' : ''; ?>>USD</option>
-                    <option value="Taka" <?php echo ($expense['currency'] == 'Taka') ? 'selected' : ''; ?>>Taka</option>
                 </select>
             </div>
 
@@ -86,6 +87,49 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+   
+
+    <?php
+// Ensure session is only started if it's not already active
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// SweetAlert Handling
+if (isset($_SESSION['success'])) {
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Success!',
+                text: '{$_SESSION['success']}',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(function() {
+                Optional: Redirect after success alert closes (if needed)
+                window.location.href = '/user/expense'; // Uncomment if you want to redirect
+            });
+        });
+    </script>";
+    unset($_SESSION['success']);
+}
+
+if (isset($_SESSION['error'])) {
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Error!',
+                text: '{$_SESSION['error']}',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then(function() {
+                Optional: Redirect after error alert closes (if needed)
+                window.location.href = '/user/expense'; // Uncomment if you want to redirect
+            });
+        });
+    </script>";
+    unset($_SESSION['error']);
+}
+?>
 
 </body>
 

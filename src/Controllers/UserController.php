@@ -325,13 +325,13 @@ class UserController
     
         if (!$trip) {
             $_SESSION['error'] = "Trip not found!";
-            header("Location: /user/dashboard");
+            header("Location: /user/view-trip");
             exit();
         }
     
         if ($trip['user_id'] !== $_SESSION['user']['id']) {
             $_SESSION['error'] = "Unauthorized access!";
-            header("Location: /user/dashboard");
+            header("Location: /user/view-trip");
             exit();
         }
     
@@ -350,7 +350,7 @@ class UserController
             }
     
             // Redirect to the dashboard with the message
-            header("Location: /user/dashboard");
+            header("Location: /user/view-trip");
             exit();
         }
     }
@@ -366,7 +366,7 @@ class UserController
         // Check if the trip exists
         if (!$trip) {
             $_SESSION['error'] = "Trip not found!";
-            header("Location: /user/dashboard");
+            header("Location: /user/view-trip");
             exit();
         }
     
@@ -381,7 +381,7 @@ class UserController
         }
     
         // Redirect back to the dashboard
-        header("Location: /user/dashboard");
+        header("Location: /user/view-trip");
         exit();
     }
     

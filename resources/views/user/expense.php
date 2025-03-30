@@ -1,6 +1,5 @@
 <?php
 $header_title = "Trip Expenses";
-$content = __DIR__ . '/expense.php'; // Load actual content
 include __DIR__ . '/../backend/layouts/app.php';
 ?>
     <style>
@@ -89,7 +88,7 @@ include __DIR__ . '/../backend/layouts/app.php';
                                     <a href="/user/expense/edit/<?php echo $expense['id']; ?>" class="btn btn-warning btn-sm">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="/user/expense/delete/<?php echo $expense['id']; ?>" method="POST" style="display:inline;">
+                                    <form action="/user/expense/delete/<?php echo $expense['id']; ?>" method="GET" style="display:inline;">
                                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -106,7 +105,41 @@ include __DIR__ . '/../backend/layouts/app.php';
                 No expenses found for this trip.
             </div>
         <?php endif; ?>
-    </div>
+    </div>  
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <?php
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (isset($_SESSION['success'])) {
+        echo "<script>
+            Swal.fire({
+                title: 'Success!',
+                text: '{$_SESSION['success']}',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(function() {
+                window.location.href = '/user/expense';
+            });
+        </script>";
+        unset($_SESSION['success']);
+    }
+
+    if (isset($_SESSION['error'])) {
+        echo "<script>
+            Swal.fire({
+                title: 'Error!',
+                text: '{$_SESSION['error']}',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then(function() {
+                window.location.href = '/user/expense';
+            });
+        </script>";
+        unset($_SESSION['error']);
+    }
+    ?>
 
