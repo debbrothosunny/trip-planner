@@ -86,9 +86,8 @@ class AuthController {
     
     // Register method
 
-    private function sendOtpEmail($email)
+    private function sendOtpEmail($email, $otp)
     {
-        $otp = rand(100000, 999999);  // Generate a 6-digit OTP
         $expiryTime = time() + 300;  // OTP expires in 5 minutes (300 seconds)
     
         // Store OTP and expiry time in database (update user record)
@@ -109,14 +108,13 @@ class AuthController {
     
             // Recipients
             $mail->setFrom('debnathsunny7852@gmail.com', 'Trip Planner');
-            $mail->addAddress($email);  // Recipient's email
+            $mail->addAddress($email);
     
             // Content
             $mail->isHTML(true);
             $mail->Subject = 'Your OTP for Email Verification';
             $mail->Body    = 'Use the following OTP to verify your email: <strong>' . $otp . '</strong><br>This OTP is valid for 5 minutes.';
     
-            // Send the email
             $mail->send();
             echo 'Registration successful! Please check your email to verify your account.';
         } catch (Exception $e) {
@@ -132,7 +130,7 @@ class AuthController {
     
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Sanitize and trim the inputs
-            $name = filter_var(trim($_POST['name']), FILTER_SANITIZE_STRING);
+            $name = htmlspecialchars(trim($_POST['name']), ENT_QUOTES, 'UTF-8');
             $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
             $password = trim($_POST['password']);
             $role = $_POST['role'];
@@ -192,12 +190,6 @@ class AuthController {
     }
     
     
-    
-    
-
-      
-
-
     public function verifyOtp()
     {
         session_start();
@@ -253,14 +245,6 @@ class AuthController {
         }
     }
     
-    
-    
-    
-    
-    
-    
-
-
     
         // Method to show OTP verification form // Method to show OTP verification form
     public function showOtpForm()

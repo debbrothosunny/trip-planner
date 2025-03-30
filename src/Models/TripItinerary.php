@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Core\Database;
 use mysqli;
-use PDOException;
+use Exception;
 use PDO;
 class TripItinerary {
     private $conn;

@@ -10,9 +10,8 @@ class Accommodation {
     private $db;
 
     // Constructor to initialize the database connection
-    public function __construct() {
-        // Get PDO connection using Singleton pattern
-        $this->db = Database::getInstance()->getConnection();
+     public function __construct($db) {
+        $this->db = $db;
     }
 
     // Get all accommodations by hotel_id (removed trip_itinery_id)

@@ -9,8 +9,8 @@ class Hotel {
     private $db;
     private $table = "hotels";
 
-    public function __construct() {
-        $this->db = Database::getInstance()->getConnection();
+    public function __construct($db) {
+        $this->db = $db;
     }
 
     // Fetch all hotels

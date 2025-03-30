@@ -12,8 +12,8 @@ class TripExpense {
     private $db;
     private $table = "trip_expenses";
 
-    public function __construct() {
-        $this->db = Database::getInstance()->getConnection(); // Correct way to get DB connection
+  public function __construct($db) {
+        $this->db = $db;
     }
 
      // Add a new expense to the database

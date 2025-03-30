@@ -9,11 +9,10 @@ class Transportation
 {  
     private $db;
 
-    public function __construct()
-    {
-        // Get the database instance
-        $this->db = Database::getInstance()->getConnection();
+    public function __construct($db) {
+        $this->db = $db;
     }
+
 
      // CRUD operations
      public function create($data)

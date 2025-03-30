@@ -10,8 +10,8 @@ class HotelRoom {
     private $table = "hotel_rooms";
 
     // Constructor to initialize the database connection
-    public function __construct() {
-        $this->db = Database::getInstance()->getConnection();
+    public function __construct($db) {
+        $this->db = $db;
     }
 
     // Fetch all rooms

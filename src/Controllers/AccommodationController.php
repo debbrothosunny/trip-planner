@@ -21,12 +21,15 @@ class AccommodationController {
         $database = Database::getInstance();
         $this->db = $database->getConnection();
     
-        // Initialize models
+        // Initialize models with DB connection
         $this->tripModel = new Trip($this->db);
         $this->accommodation = new Accommodation($this->db);
         $this->hotelModel = new Hotel($this->db);         
         $this->roomModel = new HotelRoom($this->db);       
     }
+    
+
+
     public function accommodationList() {
         session_start();
     
