@@ -17,6 +17,8 @@ use App\Controllers\HotelController;
 
 // Create a new router
     $dispatcher = FastRoute\simpleDispatcher(function (RouteCollector $router) {
+
+        
         // Login Routes
         $router->addRoute('GET', '/', [AuthController::class, 'showLoginForm']); // Shows login form
         $router->addRoute('POST', '/login', [AuthController::class, 'login']); // Handles login submission
@@ -114,24 +116,35 @@ use App\Controllers\HotelController;
         $router->addRoute('POST', '/create-trip', [UserController::class, 'createTrip']);
         $router->addRoute('GET', '/my-trips', [UserController::class, 'myTrips']);
         $router->addRoute('GET', '/trip/{id}', [UserController::class, 'viewTrip']);
-        $router->addRoute('GET', '/trip/{id}/edit', [UserController::class, 'editTrip']);
-        $router->addRoute('POST', '/trip/{id}', [UserController::class, 'updateTrip']);
-        $router->addRoute('GET','/trip/delete/{id}', [UserController::class, 'deleteTrip']);
-
+        $router->addRoute('POST', '/trip/update/{id}', [UserController::class, 'updateTrip']);
+       $router->addRoute('GET', '/trip/delete/{id}', [UserController::class, 'deleteTrip']);
     });
 
 
 
     // Add trip itinerary routes
+
     $router->addGroup('/trip/{trip_id}/itinerary', function (RouteCollector $router) {
+        // View all itineraries
         $router->addRoute('GET', '', [UserController::class, 'showItineraries']);
-        $router->addRoute('GET', '/create', [UserController::class, 'create']);  // Show form to create itinerary
-        $router->addRoute('POST', '/create', [UserController::class, 'store']);  // Accept POST request for itinerary creation
-    
+
+        // Trip Owner: Create new itinerary
+        $router->addRoute('GET', '/create', [UserController::class, 'create']);  
+        $router->addRoute('POST', '/create', [UserController::class, 'store']);  
+
+        // Trip Owner: Edit, Update, Delete itinerary
         $router->addRoute('GET', '/{id}/edit', [UserController::class, 'edit']);
         $router->addRoute('POST', '/{id}/update', [UserController::class, 'update']);
         $router->addRoute('GET', '/{id}/delete', [UserController::class, 'delete']);
+
+
+        // Trip Owner: View pending edit requests
+        $router->addRoute('GET', '/edit-requests', [TripController::class, 'viewEditRequests']);
+
+        // ✅❌ Trip Owner: Approve or Reject edit request
+        $router->addRoute('POST', '/edit-request/{requestId}/update', [TripController::class, 'updateEditRequest']);
     });
+
     
 
 
@@ -151,12 +164,10 @@ use App\Controllers\HotelController;
     
 
 
-
     $router->addGroup('/user/transportation', function (RouteCollector $router) {
         $router->addRoute('GET', '', [TransportationController::class, 'transportationList']);  // Show all transportation records
         $router->addRoute('GET', '/create', [TransportationController::class, 'create']);  // Show the create transportation form
         $router->addRoute('POST', '/store', [TransportationController::class, 'store']);  // Store new transportation record
-        $router->addRoute('GET', '/edit/{id}', [TransportationController::class, 'edit']);  // Show edit form for a specific transportation
         $router->addRoute('POST', '/update/{id}', [TransportationController::class, 'update']); // Update specific transportation record
         $router->addRoute('GET', '/delete/{id}', [TransportationController::class, 'delete']);  // Delete specific transportation record
     });
@@ -179,14 +190,16 @@ use App\Controllers\HotelController;
         $router->addRoute('POST', '/update/{id}', [AccommodationController::class, 'update']); // Update accommodation
         $router->addRoute('GET', '/delete/{id}', [AccommodationController::class, 'delete']);
     });
+       
     
-    
-
 
     $router->addGroup('/user/expense', function (RouteCollector $router) {
         // Show all expenses
         $router->addRoute('GET', '', [ExpenseController::class, 'showExpenses']);  
     
+
+        $router->addRoute('GET', '/data', [ExpenseController::class, 'getExpensesData']);
+
         // Show the form to add a new expense
         $router->addRoute('GET', '/create', [ExpenseController::class, 'createExpenseForm']);
     
@@ -201,10 +214,10 @@ use App\Controllers\HotelController;
     
         // Delete expense
         $router->addRoute('GET', '/delete/{id}', [ExpenseController::class, 'delete']);
-    
-        // View budget for a specific user and trip
 
     });
+
+    
 
     $router->addGroup('/user/budget-view', function (RouteCollector $router) {
         $router->addRoute('GET', '', [BudgetController::class, 'showBudgetView']);
@@ -218,8 +231,8 @@ use App\Controllers\HotelController;
 
   
     $router->addGroup('/user/profile', function (RouteCollector $router) {
-        $router->addRoute('GET', '', [UserController::class, 'showProfile']);  // Show user profile
-        $router->addRoute('POST', '/update', [UserController::class, 'updateProfile']); // Update profile (name, email, password)
+        $router->addRoute('GET', '', [UserController::class, 'showProfile']);  
+        $router->addRoute('POST', '/update', [UserController::class, 'updateProfile']); 
     });
     
 
@@ -228,35 +241,30 @@ use App\Controllers\HotelController;
     $router->addGroup('/participant', function (RouteCollector $router) {
         // 📌 Dashboard - Show pending invitations & accepted trips
         $router->addRoute('GET', '/dashboard', [ParticipantController::class, 'dashboard']);
-
+    
         // 📌 Trip Details - Show details for a specific trip
         $router->addRoute('GET', '/trip-details/{tripId}', [ParticipantController::class, 'viewTripDetails']);
             
         // 📌 Status Update - Accept/Decline trip
         $router->addRoute('POST', '/update-status', [ParticipantController::class, 'updateStatus']);
-
+    
         // 📌 Submit Review for a trip
         $router->addRoute('POST', '/submitReview/{tripId}', [ParticipantController::class, 'submitReview']);
-
+    
         // 📌 Payment Routes
         $router->addRoute('POST', '/make-payment', [ParticipantController::class, 'makePayment']);
+    
+        // 📌 Request Itinerary Edit
+        $router->addRoute('POST', '/trip/{tripId}/itinerary/{itineraryId}/request-edit', [ParticipantController::class, 'requestEdit']);
     });
+    
 
 
 
     $router->addGroup('/participant/profile', function (RouteCollector $router) {
-        $router->addRoute('GET', '', [ParticipantController::class, 'showProfile']);  // Show user profile
-        $router->addRoute('POST', '/update', [ParticipantController::class, 'updateProfile']); // Update profile (name, email, password)
+        $router->addRoute('GET', '', [ParticipantController::class, 'showProfile']);  
+        $router->addRoute('POST', '/update', [ParticipantController::class, 'updateProfile']); 
     });
-
-
-    
-
-
-
-    
-    
-    
 
 
 });

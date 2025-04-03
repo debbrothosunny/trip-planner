@@ -26,11 +26,17 @@
     <link rel="stylesheet" href="/asset/backend/css/style.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    
 
-    <!-- sweet alert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- sweet alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+   
 </head>
-
+   
 <style>
 body {
     font-family: 'Roboto', sans-serif;
@@ -207,6 +213,19 @@ button {
     <script src="{{ asset('asset/backend/dist/js/pages/dashboard2.js') }}"></script>
 
 
+
+
+ <!-- Vue js -->
+ <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+
+
+<!-- Other Scripts like Bootstrap JS, Custom JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="/asset/backend/js/script.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
 
 </body>

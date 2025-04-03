@@ -28,6 +28,8 @@ class ExpenseController {
         // Instantiate the models with the database connection
         $this->expenseModel = new TripExpense($this->db);
         $this->tripModel = new Trip($this->db);  // Pass the db connection to the Trip model
+
+
     }
     
 
@@ -87,6 +89,41 @@ class ExpenseController {
             exit();
         }
     }
+
+    public function getExpensesData()
+    {
+        session_start();
+
+        if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
+            http_response_code(401); // Unauthorized
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        $user_id = $_SESSION['user']['id'];
+
+        try {
+            $query = "
+                SELECT trip_expenses.*, trips.name AS trip_name
+                FROM trip_expenses
+                JOIN trips ON trip_expenses.trip_id = trips.id
+                WHERE trip_expenses.user_id = :user_id
+            ";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $expenses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'expenses' => $expenses]);
+            return;
+
+        } catch (PDOException $e) {
+            http_response_code(500); // Internal Server Error
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+            return;
+        }
+    }
     
     
     
@@ -138,56 +175,58 @@ class ExpenseController {
 
     
 
-
     public function storeExpense()
     {
-        // Start the session to access the logged-in user's data
-        session_start();
-    
-        // Ensure the user is logged in by checking session user data
-        if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
-            $_SESSION['error'] = "Please login to store expenses.";  // Store error message
-            header("Location: /login");  // Redirect to login page
-            exit();  // Exit to stop further execution
+        // Start the session (if not already started)
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
-    
-        $user_id = $_SESSION['user']['id'];  // Get the logged-in user's ID from the session
-    
-        // Check if all required form data is present
-        if (isset($_POST['trip_id'], $_POST['category'], $_POST['amount'], $_POST['currency'], $_POST['description'], $_POST['expense_date'])) {
-            // Sanitize the inputs to prevent SQL injection
-            $trip_id = filter_var($_POST['trip_id'], FILTER_SANITIZE_NUMBER_INT);
-            $category = filter_var($_POST['category'], FILTER_SANITIZE_STRING);
-            $amount = filter_var($_POST['amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-            $currency = filter_var($_POST['currency'], FILTER_SANITIZE_STRING);
-            $description = filter_var($_POST['description'], FILTER_SANITIZE_STRING);
-            $expense_date = filter_var($_POST['expense_date'], FILTER_SANITIZE_STRING); // Assuming format YYYY-MM-DD
-    
-            // Validate inputs (optional but recommended for further security)
-            if (empty($trip_id) || empty($category) || empty($amount) || empty($currency) || empty($description) || empty($expense_date)) {
-                $_SESSION['error'] = "All fields are required.";  // Set error message for missing data
-                header("Location: /user/add-expense");  // Redirect to form page to try again
+
+        // Ensure the user is logged in
+        if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
+            $response = ['success' => false, 'message' => "Please login to store expenses."];
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit();
+        }
+
+        $user_id = $_SESSION['user']['id'];
+
+        // Check if all required data is present (assuming JSON body)
+        $request_body = file_get_contents('php://input');
+        $data = json_decode($request_body, true);
+
+        if (isset($data['trip_id'], $data['category'], $data['amount'], $data['currency'], $data['description'], $data['expense_date'])) {
+            // Sanitize inputs
+            $trip_id = filter_var($data['trip_id'], FILTER_SANITIZE_NUMBER_INT);
+            $category = filter_var($data['category'], FILTER_SANITIZE_STRING);
+            $amount = filter_var($data['amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            $currency = filter_var($data['currency'], FILTER_SANITIZE_STRING);
+            $description = filter_var($data['description'], FILTER_SANITIZE_STRING);
+            $expense_date = filter_var($data['expense_date'], FILTER_SANITIZE_STRING);
+
+            // Validate inputs
+            $errors = [];
+            if (empty($trip_id)) $errors[] = "Trip ID is required.";
+            if (empty($category)) $errors[] = "Category is required.";
+            if (empty($amount) || !is_numeric($amount) || $amount <= 0) $errors[] = "Amount must be a positive number.";
+            if (empty($currency)) $errors[] = "Currency is required.";
+            if (empty($expense_date)) $errors[] = "Expense Date is required.";
+
+            if (!empty($errors)) {
+                $response = ['success' => false, 'errors' => $errors];
+                header('Content-Type: application/json');
+                echo json_encode($response);
                 exit();
             }
-    
-            // Check if amount is a valid number (optional but recommended)
-            if (!is_numeric($amount) || $amount <= 0) {
-                $_SESSION['error'] = "Amount must be a positive number.";  // Set error for invalid amount
-                header("Location: /user/add-expense");  // Redirect to form page
-                exit();
-            }
-    
-            // Prepare SQL query to insert the expense
+
             $query = "
                 INSERT INTO trip_expenses (user_id, trip_id, category, amount, currency, description, expense_date)
                 VALUES (:user_id, :trip_id, :category, :amount, :currency, :description, :expense_date)
             ";
-    
+
             try {
-                // Prepare the SQL statement
                 $stmt = $this->db->prepare($query);
-    
-                // Bind the parameters
                 $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                 $stmt->bindParam(':trip_id', $trip_id, PDO::PARAM_INT);
                 $stmt->bindParam(':category', $category, PDO::PARAM_STR);
@@ -195,31 +234,28 @@ class ExpenseController {
                 $stmt->bindParam(':currency', $currency, PDO::PARAM_STR);
                 $stmt->bindParam(':description', $description, PDO::PARAM_STR);
                 $stmt->bindParam(':expense_date', $expense_date, PDO::PARAM_STR);
-    
-                // Execute the query
+
                 if ($stmt->execute()) {
-                    $_SESSION['success'] = "Expense stored successfully.";  // Set success message
-                    header("Location: /user/expense");  // Redirect to expenses list page
-                    exit();
+                    $response = ['success' => true, 'message' => "Expense stored successfully."];
                 } else {
-                    $_SESSION['error'] = "Error: Unable to store the expense.";  // Set error for failure to store
-                    header("Location: /user/add-expense");  // Redirect back to the form
-                    exit();
+                    $response = ['success' => false, 'message' => "Error: Unable to store the expense."];
                 }
             } catch (PDOException $e) {
-                // Handle database connection errors
-                $_SESSION['error'] = "Database error: " . $e->getMessage();  // Store DB error message
-                header("Location: /user/add-expense");  // Redirect back to form for retry
-                exit();
+                $response = ['success' => false, 'message' => "Database error: " . $e->getMessage()];
             }
+
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit();
+
         } else {
-            // Handle the case where required form fields are missing
-            $_SESSION['error'] = "Error: Please fill in all fields.";  // Set error for missing fields
-            header("Location: /user/add-expense");  // Redirect back to form page
+            $response = ['success' => false, 'message' => "Error: Please provide all required data in JSON format."];
+            header('Content-Type: application/json');
+            echo json_encode($response);
             exit();
         }
     }
-    
+
     
 
     public function editExpenseForm($id) {
@@ -257,62 +293,76 @@ class ExpenseController {
         }
     }
     
-    
-    
-    
-    
-    
-    
-    public function updateExpense($id) {
-        // Start the session to access the logged-in user's data
+
+    public function updateExpense($id)
+    {
         session_start();
-        
-        // Retrieve the user ID from the session
+
         if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
-            header("Location: /");
+            // Return JSON for unauthorized access
+            http_response_code(401); // Unauthorized
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             exit();
         }
         $userId = $_SESSION['user']['id'];
-        
-        // Assuming you get the form data and validate it
-        $category = $_POST['category'];
-        $amount = $_POST['amount'];
-        $currency = $_POST['currency'];
-        $description = $_POST['description'];
-        $expense_date = $_POST['expense_date'];
-        $trip_id = $_POST['trip_id'];
-        
-        // Update the expense
+
+        // Read the raw JSON data from the request body
+        $json_data = file_get_contents('php://input');
+        $data = json_decode($json_data, true);
+
+        if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
+            // Invalid JSON data
+            http_response_code(400); // Bad Request
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON data received.']);
+            exit();
+        }
+
+        // Assuming you get and validate the form data from the JSON payload
+        $category = $data['category'] ?? '';
+        $amount = $data['amount'] ?? null;
+        $currency = $data['currency'] ?? '';
+        $description = $data['description'] ?? '';
+        $expense_date = $data['expense_date'] ?? '';
+        $trip_id = $data['trip_id'] ?? null;
+
+        // Basic validation (you should implement more robust validation)
+        if (empty($category) || !is_numeric($amount) || empty($currency) || empty($expense_date) || empty($trip_id)) {
+            http_response_code(400); // Bad Request
+            echo json_encode(['success' => false, 'message' => 'Please provide all required fields.']);
+            exit();
+        }
+
         if ($this->expenseModel->updateExpense($id, $trip_id, $category, $amount, $currency, $description, $expense_date, $userId)) {
-            // After successful update, redirect to /user/expense
-            header("Location: /user/expense");
+            // Return JSON for successful update
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'message' => 'Expense updated successfully!']);
             exit();
         } else {
-            // Handle failure (optional)
-            echo "Error updating expense.";
+            // Return JSON for update failure
+            http_response_code(500); // Internal Server Error
+            echo json_encode(['success' => false, 'message' => 'Failed to update expense. Please try again.']);
+            exit();
         }
     }
     
     
     public function delete($id) {
-        // Start the session to access the logged-in user's data
         session_start();
-        
-        // Retrieve the user ID from the session
+    
         if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
-            header("Location: /");
+            http_response_code(401); // Unauthorized
+            echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
             exit();
         }
         $userId = $_SESSION['user']['id'];
-        
-        // Call the model's delete method with expense_id and user_id
+    
         if ($this->expenseModel->deleteExpense($id, $userId)) {
-            // Redirect with success message
-            header("Location: /user/expense");
+            http_response_code(200); // OK
+            echo json_encode(['success' => true, 'message' => 'Expense deleted successfully.']);
             exit();
         } else {
-            // Redirect with error message
-            header("Location: /user/expense?error=expense_delete_failed");
+            http_response_code(500); // Internal Server Error
+            echo json_encode(['success' => false, 'message' => 'Failed to delete expense.']);
             exit();
         }
     }

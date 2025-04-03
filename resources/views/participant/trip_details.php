@@ -17,9 +17,6 @@
         transition: transform 0.3s ease-in-out;
     }
 
-    .card:hover {
-        transform: scale(1.02);
-    }
 
     .card-header {
         font-weight: bold;
@@ -57,6 +54,36 @@
                             <h5 class="mb-1"><?= htmlspecialchars($item['day_title']) ?></h5>
                             <p class="text-muted"><?= htmlspecialchars($item['description']) ?></p>
                             <small class="text-secondary"><?= htmlspecialchars($item['itinerary_date']) ?></small>
+
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal"
+                                data-bs-target="#editRequestModal_<?= $item['id'] ?>">
+                                ✏️ Request Edit
+                            </button>
+
+                            <div class="modal fade" id="editRequestModal_<?= $item['id'] ?>" tabindex="-1"
+                                aria-labelledby="editRequestLabel_<?= $item['id'] ?>" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Request Itinerary Edit</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                        <form method="POST" action="/participant/trip/<?= $tripDetails['trip_id'] ?>/itinerary/<?= $item['id'] ?>/request-edit">
+                                                <div class="mb-3">
+                                                    <label for="edit_reason_<?= $item['id'] ?>"
+                                                        class="form-label">Reason for Edit Request</label>
+                                                    <textarea class="form-control" id="edit_reason_<?= $item['id'] ?>"
+                                                        name="edit_reason" rows="3" required></textarea>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Submit Request</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                         <?php endforeach; ?>
                         <?php else : ?>
@@ -64,7 +91,23 @@
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>  
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             <!-- Accommodations Section -->
             <div class="col-md-6">
@@ -210,6 +253,61 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('form[action*="/request-edit"]');
+
+        forms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const formData = new FormData(this);
+                const actionUrl = this.getAttribute('action');
+                const modalElement = this.closest('.modal');
+
+                fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data);
+
+                    if (data.includes("✅ Request stored successfully!")) {
+                        const modalBody = modalElement.querySelector('.modal-body');
+                        modalBody.innerHTML = '<div class="alert alert-success">Request submitted successfully!</div>';
+
+                        setTimeout(() => {
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            modal.hide();
+                            setTimeout(() => {
+                                modalBody.innerHTML = `
+                                    <div class="mb-3">
+                                        <label for="edit_reason_${modalElement.id.split('_')[1]}" class="form-label">Reason for Edit Request</label>
+                                        <textarea class="form-control" id="edit_reason_${modalElement.id.split('_')[1]}" name="edit_reason" rows="3" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                                `;
+                            }, 500);
+                        }, 1500);
+                    } else {
+                        const modalBody = modalElement.querySelector('.modal-body');
+                        modalBody.innerHTML += `<div class="alert alert-danger mt-2">${data}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const modalBody = modalElement.querySelector('.modal-body');
+                    modalBody.innerHTML += '<div class="alert alert-danger mt-2">An error occurred. Please try again.</div>';
+                });
+            });
+        });
+    });
+</script>
 </body>
 
 </html>

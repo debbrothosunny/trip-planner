@@ -9,8 +9,8 @@ use Core\Database; // Import the Database class
 class Payment {
     private $db;
 
-    public function __construct() {
-        $this->db = Database::getInstance()->getConnection(); // Singleton DB connection
+    public function __construct($db) {
+        $this->db = $db;
     }
 
     /**

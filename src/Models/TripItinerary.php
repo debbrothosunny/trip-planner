@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Core\Database;
-use mysqli;
+
 use Exception;
 use PDO;
 class TripItinerary {

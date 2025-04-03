@@ -8,7 +8,7 @@ use App\Models\Trip;
 use Core\Database;
 use PDO;
 use PDOException;
-
+  
 class AccommodationController {
     private $accommodation;  
     private $tripModel;    
@@ -384,16 +384,11 @@ class AccommodationController {
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
-        
+    
         $accommodation = $stmt->fetch(PDO::FETCH_ASSOC);
     
         if (!$accommodation) {
-            $_SESSION['sweetalert'] = [
-                'title' => 'Error!',
-                'text' => 'Accommodation not found.',
-                'icon' => 'error'
-            ];
-            header("Location: /user/accommodation/list?error=not_found");
+            echo json_encode(['success' => false, 'message' => 'Accommodation not found.']);
             exit();
         }
     
@@ -404,29 +399,14 @@ class AccommodationController {
     
         try {
             if ($stmt->execute()) {
-                $_SESSION['sweetalert'] = [
-                    'title' => 'Success!',
-                    'text' => 'Accommodation deleted successfully.',
-                    'icon' => 'success'
-                ];
-                header("Location: /user/accommodation");
+                echo json_encode(['success' => true, 'message' => 'Accommodation deleted successfully.']);
                 exit();
             } else {
-                $_SESSION['sweetalert'] = [
-                    'title' => 'Error!',
-                    'text' => 'Failed to delete accommodation. Please try again.',
-                    'icon' => 'error'
-                ];
-                header("Location: /user/accommodation/list?error=delete_failed");
+                echo json_encode(['success' => false, 'message' => 'Failed to delete accommodation. Please try again.']);
                 exit();
             }
         } catch (PDOException $e) {
-            $_SESSION['sweetalert'] = [
-                'title' => 'Error!',
-                'text' => 'Database error: ' . $e->getMessage(),
-                'icon' => 'error'
-            ];
-            header("Location: /user/accommodation/?error=delete_failed");
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
             exit();
         }
     }

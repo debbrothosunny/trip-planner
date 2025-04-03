@@ -138,8 +138,6 @@ body {
     border-color: #ffeeba;
     color: #856404;
 }
-
-
 </style>
 <!-- Navigation Bar with Logout -->
 <nav class="navbar navbar-expand-lg navbar-light">
@@ -165,16 +163,17 @@ body {
     <?php if (!empty($trips)): ?>
     <div class="row">
         <?php 
-            $currentDate = new DateTime(); 
-            foreach ($trips as $trip): 
-                $startDate = new DateTime($trip['start_date']);
-                $endDate = new DateTime($trip['end_date']);
-                $isExpired = $currentDate > $endDate; // Check if trip is expired
-        ?>
+    $currentDate = new DateTime(); 
+    foreach ($trips as $trip): 
+        $startDate = new DateTime($trip['start_date']);
+        $endDate = new DateTime($trip['end_date']);
+        $isTripStarted = $currentDate >= $startDate; // Check if the trip has started
+        $isExpired = $currentDate > $endDate; // Check if trip is expired
+    ?>
         <?php 
-            // Only show 'pending' or 'accepted' trips that are not expired
-            if (($trip['status'] === 'pending' || $trip['status'] === 'accepted') && !$isExpired): 
-        ?>
+    // Only show 'pending' or 'accepted' trips that are not expired
+    if (($trip['status'] === 'pending' || $trip['status'] === 'accepted') && !$isExpired): 
+    ?>
 
         <div class="col-md-4 mb-4">
             <div class="card">
@@ -197,21 +196,21 @@ body {
 
                     <!-- Payment Status -->
                     <?php 
-                        $paymentStatus = $paymentModel->getPaymentStatus($userId, $trip['trip_id']);
-                        $paymentStatus = isset($paymentStatus) ? strtolower($paymentStatus) : 'unpaid';
-                    ?>
+                $paymentStatus = $paymentModel->getPaymentStatus($userId, $trip['trip_id']);
+                $paymentStatus = isset($paymentStatus) ? strtolower($paymentStatus) : 'unpaid';
+                ?>
 
                     <!-- Countdown Logic -->
                     <?php
-                        $currentDateTime = new DateTime();
-                        $interval = $currentDateTime->diff($startDate);
-                        $remainingDays = $interval->d;
-                        $remainingHours = $interval->h;
-                        $remainingMinutes = $interval->i;
+                $currentDateTime = new DateTime();
+                $interval = $currentDateTime->diff($startDate);
+                $remainingDays = $interval->d;
+                $remainingHours = $interval->h;
+                $remainingMinutes = $interval->i;
 
-                        $countdownClass = ($currentDateTime < $startDate) ? "text-primary" : "text-danger";
-                    ?>
-                    
+                $countdownClass = ($currentDateTime < $startDate) ? "text-primary" : "text-danger";
+                ?>
+
                     <div class="analog-clock-container">
                         <div class="clock">
                             <div class="hand day-hand" id="dayHand"></div>
@@ -227,7 +226,7 @@ body {
                     </div>
 
                     <!-- Trip Status and Payment Status -->
-                    <?php if ($trip['status'] === 'pending' && !$isExpired): ?>
+                    <?php if ($trip['status'] === 'pending' && !$isExpired && !$isTripStarted): ?>
                     <form method="POST" action="/participant/update-status">
                         <input type="hidden" name="trip_id" value="<?= $trip['trip_id']; ?>">
                         <button type="submit" name="status" value="accepted"
@@ -243,7 +242,6 @@ body {
                     <div class="alert alert-danger mt-3" role="alert">
                         This trip has expired. You can no longer accept or decline.
                     </div>
-                    <?php else: ?>
                     <!-- Payment Status -->
                     <?php if ($paymentStatus === 'completed'): ?>
                     <span class="badge bg-success">You are joined in this trip</span>
@@ -302,7 +300,7 @@ body {
                     </div>
                     <!-- End Payment Modal -->
                     <?php endif; ?>
-                 
+
                 </div>
             </div>
         </div>
@@ -315,6 +313,8 @@ body {
         No trips available for you at the moment.
     </div>
     <?php endif; ?>
+
+
 </div>
 
 

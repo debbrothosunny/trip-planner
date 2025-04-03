@@ -5,22 +5,26 @@ use PDOException;
 use App\Models\TripParticipant; 
 use App\Models\Payment; 
 use App\Models\TripReview; 
+use App\Models\ItineraryEditRequest; 
 use Core\Database;// ✅ Correct the namespace
 class ParticipantController {
     private $db;
 
     private $paymentModel;
     private $tripParticipantModel;
+    private $ItineraryEditRequest;
     
 
     public function __construct() {
-        $database = Database::getInstance(); // Use the singleton instance
-        $this->db = $database->getConnection(); // Get the connection
-
-        // Initialize the models
-        $this->paymentModel = new Payment();
-        $this->tripParticipantModel = new TripParticipant();
-        session_start();
+        $database = Database::getInstance(); // Get the singleton instance
+        $this->db = $database->getConnection(); // Get the database connection
+    
+        // Initialize models and pass the database connection
+        $this->paymentModel = new Payment($this->db);
+        $this->tripParticipantModel = new TripParticipant($this->db);
+        $this->ItineraryEditRequest = new ItineraryEditRequest($this->db); // ✅ Add this
+    
+        session_start(); // Start session
     }
 
 
@@ -33,8 +37,13 @@ class ParticipantController {
     
         $userId = $_SESSION['user_id'];
     
-        // Create an instance of the TripParticipant model
-        $tripParticipantModel = new TripParticipant();
+        // Create an instance of the Database class and get the connection
+        $database = Database::getInstance(); 
+        $db = $database->getConnection(); // Get the database connection
+    
+        // Create instances of the models, passing the database connection
+        $tripParticipantModel = new TripParticipant($db); 
+        $paymentModel = new Payment($db); 
     
         // Get all trips for the participant
         $trips = $tripParticipantModel->getAllTripsForParticipant($userId);
@@ -50,9 +59,6 @@ class ParticipantController {
                 $upcomingTrips[] = $trip; // Add to upcoming trips array
             }
         }
-    
-        // Create an instance of the Payment model
-        $paymentModel = new Payment();
     
         // Initialize an array to hold all payments
         $payments = [];
@@ -80,6 +86,7 @@ class ParticipantController {
             echo "Participant dashboard view not found!";
         }
     }
+    
     
     
     
@@ -423,6 +430,124 @@ class ParticipantController {
         $_SESSION['message'] = "Invalid request.";
         header("Location: /participant/dashboard");
         exit();
+    }
+
+
+
+
+
+
+
+    public function requestEdit($tripId, $itineraryId) {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+    
+        echo "Controller reached!<br>";
+    
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            echo "Request method is POST.<br>";
+    
+            var_dump($_SESSION['user_id'] ?? null); echo "<br>";
+            $userId = $_SESSION['user_id'] ?? null;
+            var_dump($_POST['edit_reason'] ?? ''); echo "<br>";
+            $notes = $_POST['edit_reason'] ?? '';
+    
+            if (!$userId) {
+                die("🚨 Error: User not logged in.");
+            }
+    
+            if (empty($notes)) {
+                die("⚠️ Please provide a reason for your edit request.");
+            }
+    
+            $success = false; // Initialize $success
+    
+            try {
+                $stmt = $this->db->prepare("
+                    INSERT INTO itinerary_edit_requests (trip_id, itinerary_id, user_id, notes, status)
+                    VALUES (?, ?, ?, ?, 'pending')
+                ");
+    
+                $success = $stmt->execute([$tripId, $itineraryId, $userId, $notes]);
+                var_dump($success); echo "<br>"; // Check if execute was successful
+    
+                if ($success) {
+                    echo "✅ Request stored successfully!<br>";
+                    // header("Location: /participant/trip/" . $tripId);
+                    exit;
+                } else {
+                    echo "❌ Database error!<br>";
+                }
+            } catch (PDOException $e) {
+                echo "❌ SQL Error: " . $e->getMessage() . "<br>";
+            }
+            exit;
+        } else {
+            echo "Request method is not POST.<br>";
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+     
+
+    // 📌 Trip owner views all pending edit requests
+    public function viewEditRequests($tripId) {
+        $userId = $_SESSION['user_id']; // Get logged-in user ID
+
+        // Ensure the user is the trip owner
+        $stmt = $this->db->prepare("SELECT * FROM trips WHERE id = ? AND owner_id = ?");
+        $stmt->execute([$tripId, $userId]);
+        $trip = $stmt->fetch();
+
+        if (!$trip) {
+            echo json_encode(['status' => 'error', 'message' => 'You are not the trip owner.']);
+            return;
+        }
+
+        // Fetch all pending edit requests
+        $stmt = $this->db->prepare("
+            SELECT ier.id, ier.user_id, u.name, ier.status, i.day_title 
+            FROM itinerary_edit_requests ier
+            JOIN users u ON ier.user_id = u.id
+            JOIN trip_itineraries i ON ier.itinerary_id = i.id
+            WHERE ier.trip_id = ? AND ier.status = 'pending'
+        ");
+        $stmt->execute([$tripId]);
+        $requests = $stmt->fetchAll();
+
+        include __DIR__ . '/../../resources/views/trip_owner/edit_requests.php';
+    }
+
+    // 📌 Trip owner approves/rejects edit requests
+    public function updateEditRequest($tripId, $requestId) {
+        $userId = $_SESSION['user_id']; // Get logged-in user ID
+
+        // Ensure the user is the trip owner
+        $stmt = $this->db->prepare("SELECT * FROM trips WHERE id = ? AND owner_id = ?");
+        $stmt->execute([$tripId, $userId]);
+        $trip = $stmt->fetch();
+
+        if (!$trip) {
+            echo json_encode(['status' => 'error', 'message' => 'You are not the trip owner.']);
+            return;
+        }
+
+        // Get approval status from form
+        $status = $_POST['status']; // 'approved' or 'rejected'
+
+        // Update request status in DB
+        $stmt = $this->db->prepare("UPDATE itinerary_edit_requests SET status = ? WHERE id = ?");
+        $stmt->execute([$status, $requestId]);
+
+        echo json_encode(['status' => 'success', 'message' => 'Edit request updated successfully.']);
     }
 
       

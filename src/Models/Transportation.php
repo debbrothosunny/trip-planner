@@ -19,27 +19,40 @@ class Transportation
      {
          // Prepare SQL query to insert new transportation record
          $query = "INSERT INTO transportation (trip_id, type, company_name, departure_location, arrival_location, departure_date, arrival_date, booking_reference, user_id, amount)
-                 VALUES (:trip_id, :type, :company_name, :departure_location, :arrival_location, :departure_date, :arrival_date, :booking_reference, :user_id, :amount)";
-         
+                   VALUES (:trip_id, :type, :company_name, :departure_location, :arrival_location, :departure_date, :arrival_date, :booking_reference, :user_id, :amount)";
+     
          $stmt = $this->db->prepare($query);
- 
+     
          // Bind the parameters
          $stmt->bindParam(':trip_id', $data['trip_id']);
          $stmt->bindParam(':type', $data['type']);
          $stmt->bindParam(':company_name', $data['company_name']);
          $stmt->bindParam(':departure_location', $data['departure_location']);
          $stmt->bindParam(':arrival_location', $data['arrival_location']);
-         $stmt->bindParam(':departure_date', $data['departure_date']);
-         $stmt->bindParam(':arrival_date', $data['arrival_date']);
+     
+         // Format the dates to YYYY-MM-DD if they are not already in that format
+         $departureDate = $data['departure_date'];
+         if ($departureDate && strtotime($departureDate) !== false) {
+             $departureDate = date('Y-m-d', strtotime($departureDate));
+         }
+         $stmt->bindParam(':departure_date', $departureDate);
+     
+         $arrivalDate = $data['arrival_date'];
+         if ($arrivalDate && strtotime($arrivalDate) !== false) {
+             $arrivalDate = date('Y-m-d', strtotime($arrivalDate));
+         }
+         $stmt->bindParam(':arrival_date', $arrivalDate);
+     
          $stmt->bindParam(':booking_reference', $data['booking_reference']);
          $stmt->bindParam(':user_id', $data['user_id']);
-         $stmt->bindParam(':amount', $data['amount']);  // Bind amount
- 
+         $stmt->bindParam(':amount', $data['amount']);
+     
          // Execute the query and return the last inserted ID
          if ($stmt->execute()) {
              return $this->db->lastInsertId(); // Return the ID of the newly inserted transportation
          }
- 
+     
+         error_log("Error executing query in create: " . print_r($stmt->errorInfo(), true)); // Log database errors
          return false; // If insertion failed, return false
      }
 
@@ -90,16 +103,11 @@ class Transportation
         ]);
     }
 
-
-
-    
-
     public function delete($id)
     {
         $stmt = $this->db->prepare("DELETE FROM transportation WHERE id = ?");
         return $stmt->execute([$id]);
     }
 
-    
-    
+
 }

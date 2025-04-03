@@ -138,51 +138,91 @@ class UserController
     public function myTripParticipants()
     {
         session_start();
-    
+
         // Ensure user is logged in
         if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'user') {
             header("Location: /login");
             exit();
         }
-    
+
         $user_id = $_SESSION['user']['id'];
-    
+
         // Ensure database connection exists
         if (!$this->pdo) {
             die("Database connection is not initialized.");
         }
-    
+
         // Fetch trips where the logged-in user is the creator
         $stmt = $this->pdo->prepare("
-            SELECT trips.id AS trip_id, trips.name AS trip_name
+            SELECT id AS trip_id, name AS trip_name
             FROM trips
-            WHERE trips.user_id = :user_id
+            WHERE user_id = :user_id
         ");
         $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
         $stmt->execute();
         $trips = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-        // Fetch participants for each trip where payment_status is "completed"
+
+        // Fetch participants for each trip
         $participants = [];
         foreach ($trips as $trip) {
             $trip_id = $trip['trip_id'];
             $stmt = $this->pdo->prepare("
-                SELECT users.id AS user_id, users.name AS user_name, users.email AS user_email, 
-                       trip_participants.status, 
-                       COALESCE(payments.payment_status, 'pending') AS payment_status  -- ✅ Use COALESCE to handle NULL payments
+                SELECT users.id AS user_id, users.name AS user_name, users.email AS user_email,
+                       trip_participants.status,
+                       COALESCE(payments.payment_status, 'pending') AS payment_status
                 FROM trip_participants
                 JOIN users ON trip_participants.user_id = users.id
-                LEFT JOIN payments ON trip_participants.user_id = payments.user_id 
-                    AND payments.trip_id = trip_participants.trip_id  -- ✅ Ensure correct trip-payment mapping
+                LEFT JOIN payments ON trip_participants.user_id = payments.user_id
+                    AND payments.trip_id = trip_participants.trip_id
                 WHERE trip_participants.trip_id = :trip_id
-                AND (payments.payment_status = 'completed' OR trip_participants.status = 'accepted')  -- ✅ Include accepted participants even without payment
             ");
             $stmt->bindParam(':trip_id', $trip_id, PDO::PARAM_INT);
             $stmt->execute();
             $participants[$trip_id] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
-    
-        // Load the view
+
+        // Fetch pending itinerary edit requests for each trip
+        $editRequests = [];
+        $itineraryItems = [];
+        $stmtEditRequests = $this->pdo->prepare("
+            SELECT er.*, u.name AS user_name, u.id AS user_id
+            FROM itinerary_edit_requests er
+            JOIN users u ON er.user_id = u.id
+            WHERE er.trip_id = :trip_id AND er.status = 'pending'
+        ");
+        $stmtItineraryItems = $this->pdo->prepare("
+            SELECT id AS itinerary_id, day_title
+            FROM trip_itineraries
+            WHERE id = :itinerary_id
+        ");
+
+        foreach ($trips as $trip) {
+            $stmtEditRequests->bindParam(':trip_id', $trip['trip_id'], PDO::PARAM_INT);
+            $stmtEditRequests->execute();
+            $editRequests[$trip['trip_id']] = $stmtEditRequests->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($editRequests[$trip['trip_id']] as $request) {
+                $itineraryId = $request['itinerary_id'];
+                if (!isset($itineraryItems[$itineraryId])) {
+                    $stmtItineraryItems->bindParam(':itinerary_id', $itineraryId, PDO::PARAM_INT);
+                    $stmtItineraryItems->execute();
+                    $item = $stmtItineraryItems->fetch(PDO::FETCH_ASSOC);
+                    if ($item) {
+                        $itineraryItems[$itineraryId] = $item;
+                    } else {
+                        $itineraryItems[$itineraryId] = ['day_title' => 'N/A'];
+                    }
+                }
+            }
+        }
+
+        $data = [
+            'trips' => $trips,
+            'participants' => $participants,
+            'editRequests' => $editRequests,
+            'itineraryItems' => $itineraryItems,
+        ];
+
         $participantsViewPath = __DIR__ . '/../../resources/views/user/my_trip_participants.php';
         if (file_exists($participantsViewPath)) {
             include $participantsViewPath;
@@ -199,23 +239,37 @@ class UserController
     public function viewTrips()
     {
         session_start();
+    
+        if (isset($_SESSION['user']) && is_array($_SESSION['user']) && isset($_SESSION['user']['id'])) {
+            $user_id = $_SESSION['user']['id'];
+    
+            // Get trips created by the user
+            $trips = $this->trip->getTripsByUserId($user_id);
+    
+            // Check if user is new (no trips)
+            $isNewUser = empty($trips);
+    
 
-        $user_id = $_SESSION['user']['id'];
-
-        // Get trips created by the user
-        $trips = $this->trip->getTripsByUserId($user_id);
-
-        // Check if user is new (no trips)
-        $isNewUser = empty($trips);
-
-        // Load the trip view page
-        $tripViewPath = __DIR__ . '/../../resources/views/user/view_trip.php';
-        if (file_exists($tripViewPath)) {
-            include $tripViewPath;
+            // Convert trips to JSON format for Vue.js
+            $tripsData = json_encode($trips);
+    
+            // Load the trip view page
+            $tripViewPath = __DIR__ . '/../../resources/views/user/view_trip.php';
+            if (file_exists($tripViewPath)) {
+                include $tripViewPath;
+            } else {
+                echo "Trip view page not found!";
+            }
         } else {
-            echo "Trip view page not found!";
+            // Handle the case where the user is not logged in
+            echo "User session not found. Please log in.";
+            // Optionally redirect to the login page:
+            // header("Location: /login");
+            // exit();
         }
     }
+    
+    
 
     public function showCreateTripForm()
     {
@@ -247,143 +301,139 @@ class UserController
     
         // Ensure the user is logged in
         if (!isset($_SESSION['user'])) {
-            header("Location: /login");
+            $_SESSION['error_message'] = "User not logged in.";
+            header("Location: /user/create-trip");
             exit();
         }
     
+        // Check if it's a POST request
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = $_POST['name'];
-            $start_date = $_POST['start_date'];
-            $end_date = $_POST['end_date'];
-            $budget = $_POST['budget'];
+            // Sanitize and validate input
+            $name = filter_var(trim($_POST['name']), FILTER_SANITIZE_STRING);
+            $start_date = filter_var(trim($_POST['start_date']), FILTER_SANITIZE_STRING);
+            $end_date = filter_var(trim($_POST['end_date']), FILTER_SANITIZE_STRING);
+            $budget = filter_var(trim($_POST['budget']), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             $owner_id = $_SESSION['user']['id'];
     
-            // Use the model to create the trip
+            // Validate input (basic validation)
+            if (empty($name) || empty($start_date) || empty($end_date) || empty($budget)) {
+                $_SESSION['error_message'] = "All fields are required.";
+                header("Location: /user/create-trip");
+                exit();
+            }
+    
+            // Call the model function to create the trip
             $success = $this->trip->createTrip($name, $owner_id, $start_date, $end_date, $budget);
     
+            // Respond with a success or error message
             if ($success) {
-                // Store a success message in session
                 $_SESSION['success_message'] = "Trip created successfully!";
-                
-                // Redirect to the user's dashboard after success
                 header("Location: /user/create-trip");
                 exit();
             } else {
-                echo "Failed to create the trip.";
+                $_SESSION['error_message'] = "Failed to create the trip. Please try again.";
+                header("Location: /user/create-trip");
+                exit();
             }
         }
     }
     
-
-    public function editTrip($id)
-    {
-        session_start();
-
-        // Ensure the user is logged in
-        if (!isset($_SESSION['user'])) {
-            header("Location: /login");
-            exit();
-        }
-
-        // Fetch the trip details from the database
-        $trip = $this->trip->getTripById($id);
-
-        if (!$trip) {
-            echo "Trip not found!";
-            exit();
-        }
-
-        // Ensure the logged-in user owns this trip
-        if ($trip['user_id'] !== $_SESSION['user']['id']) {
-            echo "Unauthorized access!";
-            exit();
-        }
-
-        // Define the correct path to the edit view
-        $viewPath = __DIR__ . '/../../resources/views/user/edit_trip.php';
-
-        if (file_exists($viewPath)) {
-            include $viewPath;
-        } else {
-            echo "Edit trip view not found!";
-        }
-    }
+    
+    
 
 
 
     public function updateTrip($id)
     {
         session_start();
+        error_log("Session User Data: " . print_r($_SESSION, true));
+        
     
+        // Check if the session is valid
         if (!isset($_SESSION['user'])) {
-            $_SESSION['error'] = "Please log in to continue.";
-            header("Location: /login");
+            echo json_encode(['success' => false, 'message' => 'Please log in to continue.']);
             exit();
         }
+
+
     
         $trip = $this->trip->getTripById($id);
-    
+
+        // Check if the trip exists
+        
         if (!$trip) {
-            $_SESSION['error'] = "Trip not found!";
-            header("Location: /user/view-trip");
-            exit();
+            error_log("Trip not found for ID: " . $id);
         }
-    
+
+        // Log the trip's user_id and the session's user_id
+        error_log("Trip User ID: " . $trip['user_id']);
+        error_log("Session User ID: " . $_SESSION['user']['id']);
+
+        // Check if the current user is the owner of the trip
         if ($trip['user_id'] !== $_SESSION['user']['id']) {
-            $_SESSION['error'] = "Unauthorized access!";
-            header("Location: /user/view-trip");
+            echo json_encode(['success' => false, 'message' => 'Unauthorized access!']);
             exit();
         }
     
+        // Handle the POST request
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = $_POST['name'];
-            $start_date = $_POST['start_date'];
-            $end_date = $_POST['end_date'];
-            $budget = $_POST['budget'];
-    
-            $success = $this->trip->updateTrip($id, $name, $start_date, $end_date, $budget);
-    
-            if ($success) {
-                $_SESSION['success'] = "Trip updated successfully!";
+            // Log the incoming data for debugging
+            error_log(file_get_contents('php://input'));
+        
+            $inputData = json_decode(file_get_contents('php://input'), true);
+        
+            if (isset($inputData['name'], $inputData['start_date'], $inputData['end_date'], $inputData['budget'])) {
+                $name = $inputData['name'];
+                $start_date = $inputData['start_date'];
+                $end_date = $inputData['end_date'];
+                $budget = $inputData['budget'];
+        
+                // Log the data to ensure it's correct
+                error_log("Updating Trip with data: " . print_r($inputData, true));
+        
+                $success = $this->trip->updateTrip($id, $name, $start_date, $end_date, $budget);
+        
+                if ($success) {
+                    echo json_encode(['success' => true, 'message' => 'Trip updated successfully!']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to update the trip.']);
+                }
             } else {
-                $_SESSION['error'] = "Failed to update the trip.";
+                echo json_encode(['success' => false, 'message' => 'Invalid trip data provided.']);
             }
-    
-            // Redirect to the dashboard with the message
-            header("Location: /user/view-trip");
-            exit();
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
         }
     }
     
     
-    
-
     public function deleteTrip($id)
     {
-        // Fetch the trip by its ID using the model method
+        session_start();
+
         $trip = $this->trip->getTripById($id);
-    
-        // Check if the trip exists
+
         if (!$trip) {
-            $_SESSION['error'] = "Trip not found!";
-            header("Location: /user/view-trip");
-            exit();
+            echo json_encode(['success' => false, 'message' => 'Trip not found!']);
+            return;
         }
-    
-        // Attempt to delete the trip using the model's deleteTrip method
+
+        if ($trip['user_id'] !== $_SESSION['user']['id']) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized access!']);
+            return;
+        }
+
         $success = $this->trip->deleteTrip($id);
-    
-        // Check if the deletion was successful
+
         if ($success) {
-            $_SESSION['success'] = "Trip deleted successfully!";
+            echo json_encode(['success' => true, 'message' => 'Trip deleted successfully!']);
         } else {
-            $_SESSION['error'] = "Failed to delete the trip.";
+            echo json_encode(['success' => false, 'message' => 'Failed to delete the trip.']);
         }
-    
-        // Redirect back to the dashboard
-        header("Location: /user/view-trip");
-        exit();
     }
+    
+    
+    
     
     
     

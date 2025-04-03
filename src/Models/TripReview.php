@@ -7,12 +7,10 @@ use Exception;
 
 class TripReview {
     private $conn; // This will hold the PDO connection
-    private $table = "trip_reviews";  // This defines the table name
 
     // Constructor to initialize the connection
-    public function __construct(PDO $pdo)
-    {
-        $this->conn = $pdo;  // Set the PDO connection
+    public function __construct($db) {
+        $this->conn = $db; // Assign the provided database connection to $this->conn
     }
 
     // Save a trip review

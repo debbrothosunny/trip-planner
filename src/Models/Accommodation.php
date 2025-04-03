@@ -34,55 +34,27 @@ class Accommodation {
 
     // Create a new accommodation entry 
     public function create($user_id, $hotel_id, $room_type, $check_in_date, $check_out_date, $status, $trip_id) {
-        // Optional: Validate hotel exists
-        $query = "SELECT COUNT(*) FROM hotels WHERE id = :hotel_id";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':hotel_id', $hotel_id, PDO::PARAM_INT);
-        $stmt->execute();
+        // ... (hotel and trip ID validation) ...
     
-        $count = $stmt->fetchColumn();
-        if ($count == 0) {
-            error_log("Invalid hotel_id: $hotel_id does not exist.");
-            return false;
-        }
-    
-        // Validate trip_id exists in trips table
-        $query = "SELECT COUNT(*) FROM trips WHERE id = :trip_id";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':trip_id', $trip_id, PDO::PARAM_INT);
-        $stmt->execute();
-    
-        $count = $stmt->fetchColumn();
-        if ($count == 0) {
-            error_log("Invalid trip_id: $trip_id does not exist.");
-            return false;
-        }
-    
-        // Insert into accommodations with room_type and trip_id
-        $query = "INSERT INTO accommodations (user_id, hotel_id, room_type, check_in_date, check_out_date, status, trip_id)
-                  VALUES (?, ?, ?, ?, ?, ?, ?)";
-        
+        $query = "INSERT INTO accommodations (user_id, hotel_id, room_type, check_in_date, check_out_date, status, trip_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($query);
     
-        // Bind parameters using bindValue for simplicity and accuracy
         $stmt->bindValue(1, $user_id, PDO::PARAM_INT);
         $stmt->bindValue(2, $hotel_id, PDO::PARAM_INT);
-        $stmt->bindValue(3, $room_type, PDO::PARAM_STR);  // Bind room_type
+        $stmt->bindValue(3, $room_type, PDO::PARAM_STR);
         $stmt->bindValue(4, $check_in_date, PDO::PARAM_STR);
         $stmt->bindValue(5, $check_out_date, PDO::PARAM_STR);
-        $stmt->bindValue(6, $status, PDO::PARAM_INT);  // Bind status as integer
-        $stmt->bindValue(7, $trip_id, PDO::PARAM_INT);  // Bind trip_id to the accommodation record
+        $stmt->bindValue(6, $status, PDO::PARAM_INT);
+        $stmt->bindValue(7, $trip_id, PDO::PARAM_INT);
     
-        // Execute the query and check for success
         if ($stmt->execute()) {
-            return true; // Successfully inserted the accommodation
+            return $this->db->lastInsertId(); // Return the ID of the new record
         } else {
-            // Log error if insertion failed
-            error_log("Failed to insert accommodation: " . implode(", ", $stmt->errorInfo()));
-            return false;
+            $errorInfo = $stmt->errorInfo();
+            error_log("Failed to insert accommodation: " . implode(", ", $errorInfo));
+            return ['error' => true, 'message' => "Database error: " . $errorInfo[2]];
         }
     }
-    
     
     
 
@@ -110,7 +82,7 @@ class Accommodation {
         $sql = "SELECT 
                     a.id,
                     h.name AS hotel_name,
-                    a.room_type,  -- Room type from accommodations table
+                    a.room_type,
                     r.price,
                     r.total_rooms,
                     r.available_rooms,
@@ -120,10 +92,9 @@ class Accommodation {
                     a.status
                 FROM accommodations a
                 JOIN hotels h ON a.hotel_id = h.id
-                LEFT JOIN hotel_rooms r ON h.id = r.hotel_id  -- Join on hotel_id
-                WHERE a.user_id = :user_id
-                LIMIT 1";  // Limit to one row per accommodation (if needed)
-    
+                LEFT JOIN hotel_rooms r ON h.id = r.hotel_id AND a.room_type = r.room_type
+                WHERE a.user_id = :user_id";
+
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
         $stmt->execute();
@@ -212,6 +183,7 @@ class Accommodation {
         $stmt->bindParam(':id', $id);
         $stmt->execute();
     }
+
 
 
 }

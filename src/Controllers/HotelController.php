@@ -5,16 +5,20 @@ namespace App\Controllers;
 use App\Models\Hotel;
 use App\Models\HotelRoom;
 use App\Models\Accommodation; // You need this
-
+use Core\Database; 
 class HotelController {
     private $hotelModel;
     private $hotelRoomModel;
     private $accommodationModel;
-
+    private $db;
     public function __construct() {
-        $this->hotelModel = new Hotel();
-        $this->hotelRoomModel = new HotelRoom();
-        $this->accommodationModel = new Accommodation(); // 👈 Don't forget this
+        // Get the database connection using the singleton method
+        $this->db = Database::getInstance()->getConnection();
+
+        // Instantiate the models and pass the DB connection
+        $this->hotelModel = new Hotel($this->db);
+        $this->hotelRoomModel = new HotelRoom($this->db);
+        $this->accommodationModel = new Accommodation($this->db);
     }
 
     // Show all hotels

@@ -11,8 +11,8 @@ class TripParticipant {
 
     private $conn; // This will hold the PDO connection
  
-    public function __construct() {
-        $this->db = Database::getInstance()->getConnection(); // Singleton DB connection
+    public function __construct($db) {
+        $this->db = $db;
     }
 
     // Fetch all trips for the user (i.e., participant can see all trips)

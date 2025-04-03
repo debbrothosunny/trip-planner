@@ -44,9 +44,6 @@ class User {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
-
-
     // Fetch user by ID
     public function getUser($user_id) {
         $query = "SELECT id, name, email FROM " . $this->table . " WHERE id = :user_id";
@@ -80,8 +77,5 @@ class User {
         return $stmt->execute();
     }
 
-
-
-   
 }
 
