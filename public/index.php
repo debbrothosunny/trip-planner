@@ -135,7 +135,7 @@ use App\Controllers\HotelController;
         // Trip Owner: Edit, Update, Delete itinerary
         $router->addRoute('GET', '/{id}/edit', [UserController::class, 'edit']);
         $router->addRoute('POST', '/{id}/update', [UserController::class, 'update']);
-        $router->addRoute('GET', '/{id}/delete', [UserController::class, 'delete']);
+        $router->addRoute('GET', '/{id}/delete', [UserController::class, 'deleteItineraryById']);
 
 
         // Trip Owner: View pending edit requests

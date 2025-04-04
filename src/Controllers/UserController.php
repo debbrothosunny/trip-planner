@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\TripItinerary;
-use \Core\Database; // Make sure this is correct
+use \Core\Database;
 use PDO;
 class UserController
 {
@@ -571,24 +571,26 @@ class UserController
     
 
     // Delete an itinerary
-    public function delete($trip_id, $id) {
-        // Debugging: Ensure correct values
-        if (!$trip_id || !$id) {
-            die("Error: Missing trip ID ($trip_id) or itinerary ID ($id).");
+    public function deleteItineraryById($id) {
+        // Debugging: Ensure correct value
+        if (!$id) {
+            die("Error: Missing itinerary ID.");
         }
     
         // Check if itinerary exists
-        $data = $this->itinerary->getById($id);
-        
+        $itineraryModel = new TripItinerary($this->pdo); // Instantiate the model
+        $data = $itineraryModel->getById($id); // You'll need this getById method in your model
+    
         if (!$data) {
             die("Error: Itinerary not found for ID ($id).");
         }
     
         // Proceed with deletion
-        if ($this->itinerary->delete($id)) {
-            header("Location: /trip/$trip_id/itinerary");
+        if ($itineraryModel->delete($id)) {
+            header("Location: /trip/itinerary"); // Redirect on successful deletion
             exit();
         } else {
+            // Only reach here if $itineraryModel->delete($id) returns false
             die("Error: Failed to delete itinerary.");
         }
     }

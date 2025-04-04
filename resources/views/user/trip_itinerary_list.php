@@ -120,8 +120,9 @@ body {
                     <td>
                         <a href="/trip/<?= $trip_id ?>/itinerary/<?= $row['id'] ?>/edit"
                             class="btn btn-warning btn-sm">Edit</a>
-                        <a href="/trip/<?= htmlspecialchars($trip_id) ?>/itinerary/<?= htmlspecialchars($row['id']) ?>/delete"
-                            class="btn btn-danger btn-sm" onclick="return confirm('Delete itinerary?')">Delete</a>
+                        <a href="/trip/<?= htmlspecialchars($trip_id) ?>/itinerary/<?= htmlspecialchars($itinerary['id']) ?>/delete"
+                            class="btn btn-danger btn-sm"
+                            onclick="return confirm('Are you sure you want to delete this itinerary?')">Delete</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -134,7 +135,7 @@ body {
 
         </table>
         <div class="text-center mt-3">
-            <a href="/user/view-trip" class="btn btn-outline-secondary">Back</a>  
+            <a href="/user/view-trip" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>
 

@@ -33,7 +33,7 @@
                                     <tr>
                                         <th>User</th>
                                         <th>Hotel</th>
-                                        
+
                                         <th>Location</th>
                                         <th>Hotel Description</th>
                                         <th>Room Type</th>
@@ -57,16 +57,19 @@
                                         <td>
                                             <!-- Check if the booking is confirmed or not -->
                                             <?php if ($booking['status'] == 0): // If status is 0, it means pending ?>
-                                                <form method="POST" action="/admin/hotel-bookings/confirm">
-                                                    <input type="hidden" name="accommodation_id" value="<?= $booking['id'] ?>">
-                                                    <input type="hidden" name="hotel_id" value="<?= $booking['hotel_id'] ?>">
-                                                    <input type="hidden" name="room_type" value="<?= $booking['room_type'] ?>">
-                                                    <button type="submit" class="btn btn-success btn-sm">
-                                                        Confirm
-                                                    </button>
-                                                </form>
+                                            <form method="POST" action="/admin/hotel-bookings/confirm">
+                                                <input type="hidden" name="accommodation_id"
+                                                    value="<?= $booking['id'] ?>">
+                                                <input type="hidden" name="hotel_id"
+                                                    value="<?= $booking['hotel_id'] ?>">
+                                                <input type="hidden" name="room_type"
+                                                    value="<?= $booking['room_type'] ?>">
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    Confirm
+                                                </button>
+                                            </form>
                                             <?php else: // If status is 1, it means confirmed ?>
-                                                <button class="btn btn-success btn-sm" disabled>Confirmed</button>
+                                            <button class="btn btn-success btn-sm" disabled>Confirmed</button>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -80,12 +83,15 @@
                     </div>
                 </div>
             </div>
+            <div class="text-center mt-4">
+                <a href="/admin/dashboard" class="btn btn-primary">Back to Dashboard</a>
+            </div>
         </div>
     </div>
 
     <!-- Bootstrap 5 JS (Optional for interactivity) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-</body>  
+</body>
 
 </html>

@@ -6,14 +6,16 @@ use Core\Database;
 
 use Exception;
 use PDO;
+use PDOException;
 class TripItinerary {
     private $conn;
     private $itinerary;
     private $db;
 
     // Constructor accepts PDO instance and assigns it to the db property
-    public function __construct(PDO $pdo) {
-        $this->db = $pdo;
+    public function __construct($db)
+    {
+        $this->db = $db; // Initialize the database connection
     }
 
 
@@ -145,36 +147,28 @@ class TripItinerary {
 
     // Delete an itinerary.php
     public function delete($id) {
-        if (!is_numeric($id) || $id <= 0) {
-            die("Error: Invalid itinerary ID.");
-        }
+        // ... (rest of your model's delete function) ...
     
-        // Check if the ID exists before deleting
-        $query_check = "SELECT id FROM trip_itineraries WHERE id = ?";
-        $stmt_check = $this->conn->prepare($query_check);
-        $stmt_check->bind_param("i", $id);
-        $stmt_check->execute();
-        $result = $stmt_check->get_result();
-        
-        if ($result->num_rows === 0) {
-            die("Error: Itinerary not found.");
-        }
-        $stmt_check->close();
+        $query = "DELETE FROM trip_itineraries WHERE id = :id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
     
-        // Proceed to delete the record
-        $query = "DELETE FROM trip_itineraries WHERE id = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $id);
+        error_log("Executing DELETE query: " . $query . " with ID: " . $id); // Log the query
     
         try {
-            if ($stmt->execute()) {
-                $stmt->close();
+            $result = $stmt->execute();
+            error_log("Delete query result: " . ($result ? 'success' : 'failure')); // Log the result
+            if ($result) {
                 return true;
             } else {
-                die("Error: Failed to delete itinerary.");
+                error_log("PDO Error Info: " . print_r($stmt->errorInfo(), true)); // Log detailed error info
+                return false;
             }
-        } catch (Exception $e) {
-            die("Error: " . $e->getMessage());
+        } catch (PDOException $e) {
+            error_log("PDO Exception during delete: " . $e->getMessage());
+            return false;
+        } finally {
+            $stmt->closeCursor();
         }
     }
     
