@@ -1,36 +1,10 @@
 <?php
 $header_title = "Budget View";
-$content = __DIR__ . '/dashboard.php'; // Load actual content (assuming dashboard.php generates $tripExpensesData)
 include __DIR__ . '/../backend/layouts/app.php';
 ?>
 
 <style>
-    .sidebar {
-        width: 250px;
-        background: #2c3e50;
-        color: white;
-        height: 100vh;
-        position: fixed;
-        padding-top: 20px;
-    }
-
-    .sidebar a {
-        color: white;
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        text-decoration: none;
-        transition: 0.3s;
-    }
-
-    .sidebar a i {
-        margin-right: 10px;
-    }
-
-    .sidebar a:hover,
-    .sidebar a.active {
-        background: #34495e;
-    }
+    
 
     .content {
         margin-left: 270px;
@@ -89,7 +63,7 @@ include __DIR__ . '/../backend/layouts/app.php';
     <?php endif; ?>
 </div>
 
-<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
 
 <script>
     const { createApp, ref } = Vue;

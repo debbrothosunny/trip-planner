@@ -54,21 +54,22 @@ class TripItinerary {
         return $result;
     }
 
-
     // Create a new itinerary
-    public function create($trip_id, $day_title, $description, $location, $itinerary_date) {
-        $query = "INSERT INTO trip_itineraries (trip_id, day_title, description, location, itinerary_date) VALUES (?, ?, ?, ?, ?)";
-        
+    public function create($trip_id, $day_title, $description, $location, $itinerary_date, $image = null)
+    {
+        $query = "INSERT INTO trip_itineraries (trip_id, day_title, description, location, itinerary_date, image) VALUES (?, ?, ?, ?, ?, ?)";
+
         // Prepare the query using PDO
         $stmt = $this->db->prepare($query);
-        
+
         // Bind the parameters using PDO
-        $stmt->bindValue(1, $trip_id, PDO::PARAM_INT);       // Bind trip_id as an integer
-        $stmt->bindValue(2, $day_title, PDO::PARAM_STR);      // Bind day_title as a string
+        $stmt->bindValue(1, $trip_id, PDO::PARAM_INT);        // Bind trip_id as an integer
+        $stmt->bindValue(2, $day_title, PDO::PARAM_STR);       // Bind day_title as a string
         $stmt->bindValue(3, $description, PDO::PARAM_STR);    // Bind description as a string
-        $stmt->bindValue(4, $location, PDO::PARAM_STR);       // Bind location as a string
+        $stmt->bindValue(4, $location, PDO::PARAM_STR);        // Bind location as a string
         $stmt->bindValue(5, $itinerary_date, PDO::PARAM_STR); // Bind itinerary_date as a string
-        
+        $stmt->bindValue(6, $image, PDO::PARAM_STR);          // Bind image as a string (nullable)
+
         // Execute the statement
         if ($stmt->execute()) {
             return true;
@@ -78,58 +79,31 @@ class TripItinerary {
     }
 
 
-    // Store a new itinerary
-    public function store() {
-        // Ensure Itinerary Model is instantiated
-        $this->itinerary = new TripItinerary($this->db);
-        
-        $trip_id = $_POST['trip_id'];
-        $day_title = $_POST['day_title'];
-        $description = $_POST['description'];
-        $location = $_POST['location'];
-        $itinerary_date = $_POST['itinerary_date']; // Ensure it matches the input field
-        
-        // Debug: Check if data is correctly received
-        if (!$trip_id || !$day_title || !$description || !$location || !$itinerary_date) {
-            die("Error: Missing required fields!");
-        }
-    
-        // Call create method
-        if ($this->itinerary->create($trip_id, $day_title, $description, $location, $itinerary_date)) {
-            header("Location: /trip/$trip_id/itinerary");
-            exit();
-        } else {
-            echo "Error: Could not save itinerary.";
-        }
-    }
+
 
 
     // Update an existing itinerary
-    public function update($id, $day_title, $description, $location, $itinerary_date) {
+    public function update($id, $day_title, $description, $location, $itinerary_date, $image = null)
+    {
         if (!$this->db) {
             die("Error: Database connection not initialized.");
         }
 
-        $query = "UPDATE trip_itineraries SET day_title = ?, description = ?, location = ?, itinerary_date = ? WHERE id = ?";
+        $query = "UPDATE trip_itineraries SET day_title = ?, description = ?, location = ?, itinerary_date = ?, image = ? WHERE id = ?";
         $stmt = $this->db->prepare($query);
 
         if (!$stmt) {
             die("Error: " . $this->db->errorInfo()[2]);
         }
 
-        // Bind the parameters using PDO
-        $stmt->bindValue(1, $day_title, PDO::PARAM_STR);      // Bind day_title as a string
-        $stmt->bindValue(2, $description, PDO::PARAM_STR);    // Bind description as a string
-        $stmt->bindValue(3, $location, PDO::PARAM_STR);       // Bind location as a string
-        $stmt->bindValue(4, $itinerary_date, PDO::PARAM_STR); // Bind itinerary_date as a string
-        $stmt->bindValue(5, $id, PDO::PARAM_INT);             // Bind id as an integer
+        $stmt->bindValue(1, $day_title, PDO::PARAM_STR);
+        $stmt->bindValue(2, $description, PDO::PARAM_STR);
+        $stmt->bindValue(3, $location, PDO::PARAM_STR);
+        $stmt->bindValue(4, $itinerary_date, PDO::PARAM_STR);
+        $stmt->bindValue(5, $image, PDO::PARAM_STR);
+        $stmt->bindValue(6, $id, PDO::PARAM_INT);
 
-        // Execute the statement
-        if ($stmt->execute()) {
-            return true;
-        } else {
-            die("Error executing query: " . $stmt->errorInfo()[2]);
-        }
+        return $stmt->execute();
     }
 
      // Example method to get itinerary data
@@ -137,7 +111,7 @@ class TripItinerary {
      {
          $query = "SELECT * FROM itineraries WHERE trip_id = ?";
  
-         $stmt = $this->conn->prepare($query);
+         $stmt = $this->db->prepare($query);
          $stmt->bindValue(1, $trip_id, PDO::PARAM_INT);
          $stmt->execute();
  

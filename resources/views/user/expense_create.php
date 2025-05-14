@@ -14,7 +14,7 @@ include __DIR__ . '/../backend/layouts/app.php';
     </div>
 
     <form @submit.prevent="submitForm">
-
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
         <div class="mb-3">
             <label for="trip_id" class="form-label">Trip</label>
             <select v-model="formData.trip_id" class="form-select w-100" id="trip_id" required>
@@ -27,7 +27,7 @@ include __DIR__ . '/../backend/layouts/app.php';
 
         <div class="mb-3">
             <label for="category" class="form-label">Category</label>
-            <select v-model="formData.category" class="form-control" id="category" required>
+            <select v-model="formData.category" class="form-select" id="category" required>
                 <option value="" disabled selected>Select a category</option>
                 <option value="Accommodation">Accommodation</option>
                 <option value="Food">Food</option>
@@ -44,7 +44,7 @@ include __DIR__ . '/../backend/layouts/app.php';
 
         <div class="mb-3">
             <label for="currency" class="form-label">Currency</label>
-            <select v-model="formData.currency" class="form-control" id="currency" required>
+            <select v-model="formData.currency" class="form-select" id="currency" required>
                 <option value="USD">USD</option>
             </select>
         </div>
@@ -59,13 +59,11 @@ include __DIR__ . '/../backend/layouts/app.php';
             <input type="date" v-model="formData.expense_date" class="form-control" id="expense_date" required>
         </div>
 
-        <button type="submit" class="btn btn-primary">Save Expense</button>
-
+        <div class="d-flex">
+            <a href="/user/expense" class="btn btn-secondary me-2">Back</a>
+            <button type="submit" class="btn btn-primary">Save Expense</button>
+        </div>
     </form>
-
-    <div class="mt-4">
-        <a href="/user/expense" class="btn btn-secondary">Back</a>
-    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -81,11 +79,12 @@ createApp({
             trips: <?php echo json_encode($trips); ?>,
             formData: {
                 trip_id: '',
-                category: 'Accommodation',
+                category: '',
                 amount: null,
                 currency: 'USD',
                 description: '',
                 expense_date: '',
+                csrf_token: '', // Add csrf_token to formData
             },
             errors: [],
         };
@@ -104,53 +103,55 @@ createApp({
             }
 
             if (this.errors.length === 0) {
+                // Get the CSRF token from the hidden input
+                this.formData.csrf_token = document.querySelector('input[name="csrf_token"]').value;
+
                 fetch('/user/expense/store', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': 'YOUR_CSRF_TOKEN_HERE', // Add your CSRF token here
-                        },
-                        body: JSON.stringify(this.formData),
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(errorData => {
-                                throw new Error(errorData.message || 'Failed to save expense');
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Success!',
-                                text: data.message || 'Expense saved successfully!',
-                                showConfirmButton: false,
-                                timer: 1500
-                            }).then(() => {
-                                window.location.href = '/user/expense'; // Redirect after success
-                            });
-                        } else {
-                            this.errors = Array.isArray(data.errors) ? data.errors : [data.message ||
-                                'Failed to save expense.'
-                            ];
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: this.errors.join('<br>') || 'Failed to save expense.',
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error saving expense:', error);
-                        this.errors.push(error.message || 'An unexpected error occurred.');
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.formData),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'Failed to save expense');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: data.message || 'Expense saved successfully!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.href = '/user/expense'; // Redirect after success
+                        });
+                    } else {
+                        this.errors = Array.isArray(data.errors) ? data.errors : [data.message ||
+                            'Failed to save expense.'
+                        ];
                         Swal.fire({
                             icon: 'error',
                             title: 'Error!',
-                            text: 'An unexpected error occurred.',
+                            text: this.errors.join('<br>') || 'Failed to save expense.',
                         });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving expense:', error);
+                    this.errors.push(error.message || 'An unexpected error occurred.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'An unexpected error occurred.',
                     });
+                });
             } else {
                 Swal.fire({
                     icon: 'warning',
@@ -161,4 +162,5 @@ createApp({
         },
     },
 }).mount('#app');
+
 </script>

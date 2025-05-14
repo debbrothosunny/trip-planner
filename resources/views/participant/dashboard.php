@@ -1,352 +1,320 @@
 <?php
+// Calculate time-based greetings
+$currentTime = date('H');
+if ($currentTime < 12) {
+    $greeting = "Good Morning";
+} elseif ($currentTime < 18) {
+    $greeting = "Good Afternoon";
+} elseif ($currentTime < 22) {
+    $greeting = "Good Evening";
+} else {
+    $greeting = "Good Night";
+}
+
 $header_title = "Trip";
 $content = __DIR__ . '/dashboard.php'; // Load actual content
 include __DIR__ . '/../backend/layouts/app.php';
-
-
 ?>
 
-<style>
-body {
-    display: flex;
-
-}
-
-.sidebar {
-    width: 250px;
-    background: #2c3e50;
-    color: white;
-    height: 100vh;
-    position: fixed;
-    padding-top: 20px;
-}
-
-.sidebar a {
-    color: white;
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    text-decoration: none;
-    transition: 0.3s;
-}
-
-.sidebar a i {
-    margin-right: 10px;
-}
-
-.sidebar a:hover,
-.sidebar a.active {
-    background: #34495e;
-}
-
-.content {
-    margin-left: 270px;
-    padding: 20px;
-    width: 100%;
-}
 
 
-.navbar {
-    background-color: #007bff;
-    position: sticky;
-    top: 0;
-    z-index: 1030;
-}
+<div class="container py-5">
+    <div class="greeting-box p-4 mb-4 bg-dark text-white rounded shadow-lg">
+    <div class="d-flex align-items-center">
+        <?php if (!empty($participant['profile_photo'])): ?>
+        <img src="/<?= htmlspecialchars($participant['profile_photo']) ?>" alt="Profile Picture"
+            class="rounded-circle me-3" width="50" height="50">
+        <?php else: ?>
+        <i class="fas fa-user-circle fa-3x me-3 text-info"></i>
+        <?php endif; ?>
 
-.navbar .btn-danger {
-    background-color: #dc3545;
-}
-
-.card {
-    border-radius: 15px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
-
-.card:hover {
-
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
-}
-
-.card-body {
-    padding: 20px;
-    background-color: #fff;
-}
-
-.card-title {
-    font-size: 1.35rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
-}
-
-.card-text {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #555;
-}
-
-.badge {
-    font-size: 0.9rem;
-    border-radius: 12px;
-    padding: 6px 12px;
-}
-
-.alert {
-    font-size: 1.1rem;
-    border-radius: 8px;
-}
-
-.btn-custom {
-    background-color: #007bff;
-    color: white;
-}
-
-.btn-custom:hover {
-    background-color: #0056b3;
-}
-
-.btn-sm {
-    padding: 6px 14px;
-}
-
-.navbar-brand {
-    color: white;
-    font-size: 1.5rem;
-}
-
-.container {
-    margin-top: 50px;
-}
-
-/* Responsive Cards */
-@media (max-width: 768px) {
-    .col-md-4 {
-        max-width: 100%;
-        margin-bottom: 15px;
-    }
-}
-
-.alert-info {
-    background-color: #d1ecf1;
-    border-color: #bee5eb;
-    color: #0c5460;
-}
-
-.alert-warning {
-    background-color: #fff3cd;
-    border-color: #ffeeba;
-    color: #856404;
-}
-</style>
-<!-- Navigation Bar with Logout -->
-<nav class="navbar navbar-expand-lg navbar-light">
-    <div class="container-fluid">
-        <form action="/logout" method="POST" class="d-flex">
-            <button type="submit" class="btn btn-danger">Logout</button>
-        </form>
+        <div>
+            <h2 class="mb-1">Hello, <?= htmlspecialchars($participant['name'] ?? 'Guest'); ?> 👋</h2>
+            <p class="mb-0">"Another day, another adventure—let’s get started!"</p>
+            <?php if ($activeSince): ?>
+                <p class="mb-0"><small>Active since: <?= htmlspecialchars(date('j F, Y', strtotime($activeSince))) ?></small></p>
+            <?php endif; ?>
+        </div>
     </div>
-</nav>
+</div>
 
-<div class="container">
-    <h1 class="text-center mb-4">Welcome to Your Dashboard</h1>
+ 
 
-    <!-- Session message if set -->
-    <?php if (isset($_SESSION['message'])): ?>
-    <div class="alert alert-info text-center">
-        <?= htmlspecialchars($_SESSION['message']) ?>
-    </div>
-    <?php unset($_SESSION['message']); ?>
-    <?php endif; ?>
 
-    <!-- Display trips if available -->
-    <?php if (!empty($trips)): ?>
-    <div class="row">
-        <?php 
-    $currentDate = new DateTime(); 
-    foreach ($trips as $trip): 
-        $startDate = new DateTime($trip['start_date']);
-        $endDate = new DateTime($trip['end_date']);
-        $isTripStarted = $currentDate >= $startDate; // Check if the trip has started
-        $isExpired = $currentDate > $endDate; // Check if trip is expired
-    ?>
-        <?php 
-    // Only show 'pending' or 'accepted' trips that are not expired
-    if (($trip['status'] === 'pending' || $trip['status'] === 'accepted') && !$isExpired): 
-    ?>
 
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title"><?= htmlspecialchars($trip['trip_name']) ?></h5>
-                    <p class="card-text">
-                        <strong>Start Date:</strong> <?= htmlspecialchars($trip['start_date']) ?><br>
-                        <strong>End Date:</strong> <?= htmlspecialchars($trip['end_date']) ?><br>
-                        <strong>Budget:</strong> $<?= htmlspecialchars($trip['budget']) ?><br>
-                        <strong>Created By:</strong> <?= htmlspecialchars($trip['creator_name']) ?>
-                        (<?= htmlspecialchars($trip['creator_email']) ?>)<br>
-                        <strong>Status:</strong>
-                        <a href="/participant/trip-details/<?= $trip['trip_id']; ?>" class="btn btn-info btn-sm">View
-                            Details</a>
-                        <span
-                            class="badge bg-<?= ($trip['status'] === 'accepted') ? 'success' : (($trip['status'] === 'declined') ? 'danger' : 'secondary'); ?>">
-                            <?= htmlspecialchars($trip['status'] ?? 'Pending') ?>
-                        </span>
-                    </p>
+<?php if (!empty($recommendations)): ?>
+    <?php foreach ($recommendations as $recommendation): ?>
+        <?php
+            $mutedIds = $_SESSION['muted_recommendation_ids'] ?? [];
+            if (in_array($recommendation['id'], $mutedIds)) {
+                continue; // Skip muted trip
+            }
+        ?>
 
-                    <!-- Payment Status -->
-                    <?php 
-                $paymentStatus = $paymentModel->getPaymentStatus($userId, $trip['trip_id']);
-                $paymentStatus = isset($paymentStatus) ? strtolower($paymentStatus) : 'unpaid';
-                ?>
+        <script>
+            $(document).ready(function(){
+                $("#recommendationModal_<?= $recommendation['id'] ?>").modal("show");
+            });
+        </script>
 
-                    <!-- Countdown Logic -->
-                    <?php
-                $currentDateTime = new DateTime();
-                $interval = $currentDateTime->diff($startDate);
-                $remainingDays = $interval->d;
-                $remainingHours = $interval->h;
-                $remainingMinutes = $interval->i;
-
-                $countdownClass = ($currentDateTime < $startDate) ? "text-primary" : "text-danger";
-                ?>
-
-                    <div class="analog-clock-container">
-                        <div class="clock">
-                            <div class="hand day-hand" id="dayHand"></div>
-                            <div class="hand hour-hand" id="hourHand"></div>
-                            <div class="hand minute-hand" id="minuteHand"></div>
-                        </div>
-                        <p class="card-text <?= $countdownClass; ?>">
-                            <strong>Countdown:</strong>
-                            <span id="countdownText<?= $trip['trip_id']; ?>">
-                                <?= ($currentDateTime < $startDate) ? "Starts in: $remainingDays days, $remainingHours hours, $remainingMinutes minutes" : "Trip has already started."; ?>
-                            </span>
-                        </p>
+        <div class="modal fade" id="recommendationModal_<?= $recommendation['id'] ?>" tabindex="-1" aria-labelledby="recommendationModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Recommended Trip!</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-
-                    <!-- Trip Status and Payment Status -->
-                    <?php if ($trip['status'] === 'pending' && !$isExpired && !$isTripStarted): ?>
-                    <form method="POST" action="/participant/update-status">
-                        <input type="hidden" name="trip_id" value="<?= $trip['trip_id']; ?>">
-                        <button type="submit" name="status" value="accepted"
-                            class="btn btn-success btn-sm me-2">Accept</button>
-                        <button type="submit" name="status" value="declined"
-                            class="btn btn-danger btn-sm">Decline</button>
-                    </form>
-                    <?php elseif ($trip['status'] === 'accepted' && $isExpired): ?>
-                    <div class="alert alert-success mt-3" role="alert">
-                        <strong>Completed</strong>
+                    <div class="modal-body">
+                        A new trip matching your recent preferences...
+                        <p>Life Style: <?= htmlspecialchars($recommendation['trip_style'] ?? '') ?></p>
+                        <p>Destination: <?= htmlspecialchars($recommendation['destination'] ?? '') ?></p>
+                        <p>Trip Name: <?= htmlspecialchars($recommendation['name'] ?? '') ?></p>
+                        <a href="/participant/trips" class="btn btn-primary mb-2">View Trip</a><br>
+                        <a href="?mute_recommendation=<?= $recommendation['id'] ?>" class="btn btn-sm btn-outline-danger">Mute Recommendation</a>
                     </div>
-                    <?php elseif ($isExpired): ?>
-                    <div class="alert alert-danger mt-3" role="alert">
-                        This trip has expired. You can no longer accept or decline.
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
-                    <!-- Payment Status -->
-                    <?php if ($paymentStatus === 'completed'): ?>
-                    <span class="badge bg-success">You are joined in this trip</span>
-                    <?php elseif ($paymentStatus === 'pending'): ?>
-                    <span class="badge bg-warning text-dark">Payment Pending</span>
-                    <div class="alert alert-info mt-3" role="alert">
-                        Your payment is pending. Please wait for confirmation.
-                    </div>
-                    <?php elseif ($paymentStatus === 'unpaid'): ?>
-                    <div class="alert alert-warning mt-3" role="alert">
-                        Please make the payment first before the trip can proceed.
-                    </div>
-                    <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal"
-                        data-bs-target="#paymentModal<?= $trip['trip_id']; ?>">Make Payment</button>
-                    <?php endif; ?>
-
-                    <!-- Payment Modal -->
-                    <div class="modal fade" id="paymentModal<?= $trip['trip_id']; ?>" tabindex="-1"
-                        aria-labelledby="paymentModalLabel<?= $trip['trip_id']; ?>" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="paymentModalLabel<?= $trip['trip_id']; ?>">Make Payment
-                                        for <?= htmlspecialchars($trip['trip_name']) ?></h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form method="POST" action="/participant/make-payment">
-                                        <input type="hidden" name="trip_id" value="<?= $trip['trip_id']; ?>">
-                                        <div class="mb-3">
-                                            <label for="transaction_id" class="form-label">Transaction ID</label>
-                                            <input type="text" class="form-control" name="transaction_id"
-                                                placeholder="Enter your transaction ID" required>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="amount" class="form-label">Enter Payment Amount (৳)</label>
-                                            <input type="number" class="form-control" name="amount" required min="1"
-                                                max="<?= $trip['budget']; ?>">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="payment_method" class="form-label">Payment Method</label>
-                                            <select class="form-control" name="payment_method" required>
-                                                <option value="bkash">Bkash</option>
-                                                <option value="nagad">Nagad</option>
-                                            </select>
-                                        </div>
-
-                                        <button type="submit" class="btn btn-success">Submit Payment</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- End Payment Modal -->
-                    <?php endif; ?>
-
                 </div>
             </div>
         </div>
 
-        <?php endif; ?>
-        <?php endforeach; ?>
-    </div>
-    <?php else: ?>
-    <div class="alert alert-warning text-center">
-        No trips available for you at the moment.
-    </div>
-    <?php endif; ?>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 
+
+
+
+
+
+
+
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card text-white h-100 shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-titles text-primary text-center"><i class="fas fa-route me-2"></i> Ongoing Trips
+                    </h5>
+                    <p class="card-text display-5 text-center"><?= count($ongoingTrips) ?></p>
+                    <?php if (count($ongoingTrips) > 0): ?>
+                    <div class="list-group">
+                        <?php foreach ($ongoingTrips as $trip): ?>
+                        <div class="list-group-item bg-transparent text-white border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><?= htmlspecialchars($trip['trip_name']) ?></span>
+                                <?php
+                                    if (!empty($trip['start_date']) && !empty($trip['end_date'])) {
+                                        $startDate = strtotime($trip['start_date']);
+                                        $endDate = strtotime($trip['end_date']);
+                                        $now = time();
+                                        $totalDuration = $endDate - $startDate;
+                                        $elapsed = $now - $startDate;
+                                        $progress = ($totalDuration > 0) ? ($elapsed / $totalDuration) * 100 : 0;
+                                        $progress = min(100, max(0, $progress));
+                                    } else {
+                                        $progress = 0;
+                                    }
+                                ?>
+                                <div class="progress flex-grow-1 ms-3" style="height: 10px;">
+                                    <div class="progress-bar progress-bar-animated progress-bar-striped"
+                                        role="progressbar" style="width: <?= $progress ?>%;"
+                                        aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <span class="ms-2"><?= round($progress) ?>%</span>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                    <a href="/participant/trips" class="btn btn-outline-light btn-sm mt-3 w-100">
+                        <i class="fas fa-eye me-1"></i> View Trips
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card text-white h-100 shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-titles text-success text-center"><i class="fas fa-check-circle me-2"></i>
+                        Accepted Trips</h5>
+                    <p class="card-text display-5 text-center">
+                        <?= count(array_filter($participantTrips, fn($t) => ($t['status'] ?? '') === 'accepted')) ?>
+                    </p>
+                    <a href="/participant/trips" class="btn btn-outline-light btn-sm mt-3 w-100">
+                        <i class="fas fa-eye me-1"></i> View Accepted
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="time-info text-white mt-4 text-center">
+        <i id="timeIcon"></i>
+        <span id="greeting"></span>, <span id="currentDate"></span>, <span id="currentTime"></span>
+    </div>
 </div>
-
-
-
-
-<!-- Required Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-
+  
 
 <script>
-function startCountdown(tripId, startDate) {
-    let countDownDate = new Date(startDate).getTime();
+document.addEventListener("DOMContentLoaded", function() {
+    function updateFooter() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, "0");
+        const seconds = now.getSeconds().toString().padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
 
-    let x = setInterval(function() {
-        let now = new Date().getTime();
-        let distance = countDownDate - now;
+        const greeting = document.getElementById("greeting");
+        const timeIcon = document.getElementById("timeIcon");
 
-        if (distance > 0) {
-            let days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            document.getElementById('countdown' + tripId).innerHTML =
-                `Starts in: ${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+        if (hours >= 5 && hours < 12 && ampm === "AM") {
+            greeting.innerText = "Good Morning!";
+            timeIcon.className = "fas fa-sun sun-animation";
+        } else if (ampm === "PM" && hours < 5) {
+            greeting.innerText = "Good Afternoon!";
+            timeIcon.className = "fas fa-sun sun-animation";
+        } else if (ampm === "PM" && hours >= 5) {
+            greeting.innerText = "Good Evening!";
+            timeIcon.className = "fas fa-moon moon-animation";
         } else {
-            clearInterval(x);
-            document.getElementById('countdown' + tripId).innerHTML = "Trip has already started.";
+            greeting.innerText = "Good Night!";
+            timeIcon.className = "fas fa-moon moon-animation";
         }
-    }, 1000);
+
+        const date = now.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+        document.getElementById("currentDate").innerText = date;
+        document.getElementById("currentTime").innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    updateFooter();
+    setInterval(updateFooter, 1000);
+
+    const ongoingTrips = <?php echo json_encode($ongoingTrips); ?>;
+    ongoingTrips.forEach(trip => {
+        const tripDiv = document.querySelector(`[data-trip-id="${trip.id}"]`);
+        if (tripDiv) {
+            const progressBar = tripDiv.querySelector('.progress-bar');
+            const startDate = new Date(trip.start_date).getTime();
+            const endDate = new Date(trip.end_date).getTime();
+            const now = Date.now();
+            const totalDuration = endDate - startDate;
+            const elapsed = now - startDate;
+            const progress = (totalDuration > 0) ? (elapsed / totalDuration) * 100 : 0;
+            const progressPercent = Math.min(100, Math.max(0, progress));
+
+            progressBar.style.width = `${progressPercent}%`;
+            progressBar.setAttribute('aria-valuenow', progressPercent);
+            progressBar.textContent = `${Math.round(progressPercent)}%`;
+        }
+    });
+});
+
+$(document).ready(function(){
+            <?php if (!empty($recommendations)): ?>
+                <?php foreach ($recommendations as $recommendation): ?>
+                    $("#recommendationModal_<?= $recommendation['id'] ?>").modal("show");
+                <?php endforeach; ?>
+            <?php endif; ?>
+        });
+</script>
+
+
+<style>
+body {
+    background-color: #1e1e1e;
+    /* Light black */
+    font-family: 'Arial', sans-serif;
+    color: #e0e0e0;
+    transition: background-color 0.3s, color 0.3s;
 }
 
-startCountdown(<?= $trip['trip_id']; ?>, "<?= $trip['start_date']; ?>");
-</script>
+.greeting-box {
+    background: linear-gradient(135deg, #0f2027, rgb(12, 28, 34), #2c5364);
+    border-left: 5px solid #17a2b8;
+}
+
+.greeting-box h1 {
+    font-size: 2.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.greeting-box p {
+    font-size: 1.25rem;
+    opacity: 0.9;
+}
+
+
+.btn-light {
+    background-color: #ffffff22;
+    color: #fff;
+    border: 1px solid #ffffff33;
+    border-radius: 1.25rem;
+    transition: all 0.3s;
+}
+
+.btn-light:hover {
+    background-color: #ffffff40;
+    color: white;
+}
+
+.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+    border-radius: 1.25rem;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.card-titles {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.card-text {
+    font-size: 2rem;
+}
+
+.time-info {
+    text-align: center;
+    margin-top: 3rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #cccccc;
+}
+
+.time-info i {
+    margin-right: 10px;
+}
+
+.sun-animation,
+.moon-animation {
+    animation: spin 5s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.btn-container {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+</style>

@@ -1,216 +1,389 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Add New Accommodation</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Booking</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .container {
+        margin-top: 30px;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+    </style>
 </head>
 
 <body>
+    <div class="container">
+        <h1 class="mb-4">Create New Booking</h1>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Trip Planner</a>
+        <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger mb-3">
+            <?php
+                echo htmlspecialchars($_SESSION['error']);
+                unset($_SESSION['error']); // Clear the error message
+            ?>
         </div>
-    </nav>
-
-    <div class="container mt-5">
-        <?php if (isset($_SESSION['errors'])): ?>
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                <?php foreach ($_SESSION['errors'] as $error): ?>
-                <li><?= htmlspecialchars($error) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-        <?php unset($_SESSION['errors']); ?>
         <?php endif; ?>
 
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Add New Accommodation</h4>
+        <form action="/user/accommodation/store" method="POST">
+
+            <div class="mb-3">
+                <label for="country" class="form-label">Country</label>
+                <select class="form-select" id="country" name="country" required>
+                    <option value="">Select Country</option>
+                    <?php if (isset($countries) && is_array($countries)): ?>
+                    <?php foreach ($countries as $country): ?>
+                    <option value="<?php echo htmlspecialchars($country['id']); ?>">
+                        <?php echo htmlspecialchars($country['name']); ?></option>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
             </div>
-            <div class="card-body">
-                <form action="/user/accommodation/store" method="POST">
 
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Location</label>
-                        <select class="form-select" id="location" name="location" required>
-                            <option value="" disabled selected>Select Location</option>
-                            <?php foreach ($locations as $loc): ?>
-                            <option value="<?= htmlspecialchars($loc['location']) ?>">
-                                <?= htmlspecialchars($loc['location']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="trip" class="form-label">Trip</label>
-                        <select class="form-select" id="trip_id" name="trip_id" required>
-                            <option value="" disabled selected>Select Trip</option>
-                            <?php foreach ($trips as $trip): ?>
-                            <option value="<?php echo $trip['id']; ?>"><?php echo $trip['name']; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="mb-3" id="hotel-container" style="display: none;">
-                        <label for="hotel" class="form-label">Hotel</label>
-                        <select class="form-select" id="hotel" name="hotel_id" required>
-                            <option value="" disabled selected>Select Hotel</option>
-                        </select>
-                    </div>
-
-                    <div id="room-details-container" style="display: none;">
-                        <h5>Select a Room</h5>
-                        <div id="room-details" class="row"></div>
-
-                        <input type="hidden" id="selected_room_type" name="room_type">
-                        <input type="hidden" id="selected_price" name="price">
-                        <input type="hidden" id="selected_total_rooms" name="total_rooms">
-                        <input type="hidden" id="selected_available_rooms" name="available_rooms">
-                        <input type="hidden" id="selected_description" name="description">
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="check_in_date" class="form-label">Check-in Date</label>
-                            <input type="date" class="form-control" id="check_in_date" name="check_in_date" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="check_out_date" class="form-label">Check-out Date</label>
-                            <input type="date" class="form-control" id="check_out_date" name="check_out_date" required>
-                        </div>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success">Submit Accommodation</button>
-                    </div>
-
-                </form>
-                <div class="text-center mt-3">
-                    <a href="/user/accommodation" class="btn btn-outline-secondary">Back</a>
-                </div>
+            <div class="mb-3">
+                <label for="state" class="form-label">State</label>
+                <select class="form-select" id="state" name="state" disabled required>
+                    <option value="">Select State</option>
+                </select>
             </div>
-        </div>
+
+            <div class="mb-3">
+                <label for="hotel_id" class="form-label">Hotel</label>
+                <select class="form-select" id="hotel_id" name="hotel_id" disabled required>
+                    <option value="">Select Hotel</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="room_type_id" class="form-label">Room Type</label>
+                <select class="form-select" id="room_type_id" name="room_type_id" disabled required>
+                    <option value="">Select Room Type</option>
+                    <?php if (isset($roomTypes) && is_array($roomTypes)): ?>
+                    <?php foreach ($roomTypes as $roomType): ?>
+                    <option value="<?php echo htmlspecialchars($roomType['id']); ?>"
+                        data-default-price="<?php echo htmlspecialchars($roomType['price'] ?? ''); ?>"
+                        data-description="<?php echo htmlspecialchars($roomType['description'] ?? ''); ?>"
+                        data-amenities="<?php echo htmlspecialchars($roomType['amenities'] ?? ''); ?>">
+                        <?php echo htmlspecialchars($roomType['name'] ?? 'N/A'); ?>
+                        (Price:
+                        <?php echo isset($roomType['price']) ? htmlspecialchars(number_format($roomType['price'], 2)) : 'N/A'; ?>
+                        USD)
+                    </option>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+
+            <div id="room-details-container" class="mb-3">
+                <h5>Room Details:</h5>
+                <p><strong>Description:</strong> <span id="room-description"></span></p>
+                <p><strong>Amenities:</strong> <span id="room-amenities"></span></p>
+                <p><strong>Total Rooms:</strong> <span id="room-total"></span></p>
+                <p><strong>Available Rooms:</strong> <span id="room-available"></span></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="check_in_date" class="form-label">Check-in Date and Time</label>
+                <input type="datetime-local" class="form-control" id="check_in_date" name="check_in_date" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="check_out_date" class="form-label">Check-out Date and Time</label>
+                <input type="datetime-local" class="form-control" id="check_out_date" name="check_out_date" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="trip_id" class="form-label">Select Trip</label>
+                <select class="form-select" id="trip_id" name="trip_id" required>
+                    <option value="">-- Select Trip --</option>
+                    <?php if (isset($trips) && is_array($trips)): ?>
+                    <?php foreach ($trips as $trip): ?>
+                    <option value="<?php echo htmlspecialchars($trip['id']); ?>">
+                        <?php echo htmlspecialchars($trip['name']); ?>
+                    </option>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+
+            <div id="availability-message" class="mt-3"></div>
+
+            <button type="submit" class="btn btn-primary">Book Now</button>
+            <a href="/user/accommodation" class="btn btn-secondary ms-2">Cancel</a>
+        </form>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        document.getElementById('location').addEventListener('change', function() {
-            var location = this.value.trim();
-            if (location) {
-                document.getElementById('hotel-container').style.display = 'block';
+    document.addEventListener('DOMContentLoaded', function() {
+        const countrySelect = document.getElementById('country');
+        const stateSelect = document.getElementById('state');
+        const hotelSelect = document.getElementById('hotel_id');
+        const roomTypeSelect = document.getElementById('room_type_id');
+        const roomDetailsContainer = document.getElementById('room-details-container');
+        const roomDescriptionSpan = document.getElementById('room-description');
+        const roomAmenitiesSpan = document.getElementById('room-amenities');
+        const roomTotalSpan = document.getElementById('room-total');
+        const roomAvailableSpan = document.getElementById('room-available');
+        const checkInDateInput = document.getElementById('check_in_date');
+        const checkOutDateInput = document.getElementById('check_out_date');
+        const availabilityMessageDiv = document.getElementById('availability-message');
 
-                fetch(`/user/accommodation/fetch-hotels/${encodeURIComponent(location)}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        var hotelSelect = document.getElementById('hotel');
-                        hotelSelect.innerHTML = '<option value="" disabled selected>Select Hotel</option>';
-
-                        data.forEach(hotel => {
-                            var option = document.createElement('option');
-                            option.value = hotel.hotel_id;
-                            option.textContent = hotel.hotel_name;
-                            hotelSelect.appendChild(option);
+        countrySelect.addEventListener('change', function() {
+            const countryId = this.value;
+            if (countryId) {
+                fetch(`/user/accommodation/states/${countryId}`)
+                    .then(response => response.json())
+                    .then(states => {
+                        stateSelect.innerHTML = '<option value="">Select State</option>';
+                        stateSelect.disabled = false;
+                        states.forEach(state => {
+                            const option = document.createElement('option');
+                            option.value = state.id;
+                            option.textContent = state.name;
+                            stateSelect.appendChild(option);
                         });
-                    })
-                    .catch(error => {
-                        console.error('Error fetching hotels:', error);
+                        hotelSelect.disabled = true;
+                        hotelSelect.innerHTML = '<option value="">Select Hotel</option>';
+                        roomTypeSelect.disabled = true;
+                        roomTypeSelect.innerHTML = '<option value="">Select Room Type</option>';
+                        roomDetailsContainer.innerHTML =
+                            '<h5>Room Details:</h5><p><strong>Description:</strong> <span id="room-description"></span></p><p><strong>Amenities:</strong> <span id="room-amenities"></span></p><p><strong>Total Rooms:</strong> <span id="room-total"></span></p><p><strong>Available Rooms:</strong> <span id="room-available"></span></p>';
+                        roomDescriptionSpan.textContent = '';
+                        roomAmenitiesSpan.textContent = '';
+                        roomTotalSpan.textContent = '';
+                        roomAvailableSpan.textContent = '';
                     });
             } else {
-                document.getElementById('hotel-container').style.display = 'none';
+                stateSelect.disabled = true;
+                stateSelect.innerHTML = '<option value="">Select State</option>';
+                hotelSelect.disabled = true;
+                hotelSelect.innerHTML = '<option value="">Select Hotel</option>';
+                roomTypeSelect.disabled = true;
+                roomTypeSelect.innerHTML = '<option value="">Select Room Type</option>';
+                roomDetailsContainer.innerHTML =
+                    '<h5>Room Details:</h5><p><strong>Description:</strong> <span id="room-description"></span></p><p><strong>Amenities:</strong> <span id="room-amenities"></span></p><p><strong>Total Rooms:</strong> <span id="room-total"></span></p><p><strong>Available Rooms:</strong> <span id="room-available"></span></p>';
+                roomDescriptionSpan.textContent = '';
+                roomAmenitiesSpan.textContent = '';
+                roomTotalSpan.textContent = '';
+                roomAvailableSpan.textContent = '';
             }
         });
 
-        document.getElementById('hotel').addEventListener('change', function() {
-            var hotelId = this.value.trim();
-            if (hotelId) {
-                document.getElementById('room-details-container').style.display = 'block';
-                document.getElementById('room-details').innerHTML = '';
+        stateSelect.addEventListener('change', function() {
+            const countryId = countrySelect.value;
+            const stateId = this.value;
+            if (countryId && stateId) {
+                fetch(`/user/accommodation/hotels/${countryId}/${stateId}`)
+                    .then(response => response.json())
+                    .then(hotels => {
+                        hotelSelect.innerHTML = '<option value="">Select Hotel</option>';
+                        hotelSelect.disabled = false;
+                        hotels.forEach(hotel => {
+                            const option = document.createElement('option');
+                            option.value = hotel.id;
+                            option.textContent = hotel.name;
+                            hotelSelect.appendChild(option);
+                        });
+                        roomTypeSelect.disabled = true;
+                        roomTypeSelect.innerHTML = '<option value="">Select Room Type</option>';
+                        roomDetailsContainer.innerHTML =
+                            '<h5>Room Details:</h5><p><strong>Description:</strong> <span id="room-description"></span></p><p><strong>Amenities:</strong> <span id="room-amenities"></span></p><p><strong>Total Rooms:</strong> <span id="room-total"></span></p><p><strong>Available Rooms:</strong> <span id="room-available"></span></p>';
+                        roomDescriptionSpan.textContent = '';
+                        roomAmenitiesSpan.textContent = '';
+                        roomTotalSpan.textContent = '';
+                        roomAvailableSpan.textContent = '';
+                    });
+            } else {
+                hotelSelect.disabled = true;
+                hotelSelect.innerHTML = '<option value="">Select Hotel</option>';
+                roomTypeSelect.disabled = true;
+                roomTypeSelect.innerHTML = '<option value="">Select Room Type</option>';
+                roomDetailsContainer.innerHTML =
+                    '<h5>Room Details:</h5><p><strong>Description:</strong> <span id="room-description"></span></p><p><strong>Amenities:</strong> <span id="room-amenities"></span></p><p><strong>Total Rooms:</strong> <span id="room-total"></span></p><p><strong>Available Rooms:</strong> <span id="room-available"></span></p>';
+                roomDescriptionSpan.textContent = '';
+                roomAmenitiesSpan.textContent = '';
+                roomTotalSpan.textContent = '';
+                roomAvailableSpan.textContent = '';
+            }
+        });
 
-                fetch(`/user/accommodation/fetch-hotel-rooms/${hotelId}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        return response.json();
+        hotelSelect.addEventListener('change', function() {
+            const hotelId = this.value;
+            if (hotelId) {
+                fetch(`/user/accommodation/room-types/${hotelId}`)
+                    .then(response => response.json())
+                    .then(roomTypes => {
+                        roomTypeSelect.innerHTML = '<option value="">Select Room Type</option>';
+                        roomTypeSelect.disabled = false;
+                        roomDetailsContainer.innerHTML =
+                            '<h5>Room Details:</h5><p><strong>Description:</strong> <span id="room-description"></span></p><p><strong>Amenities:</strong> <span id="room-amenities"></span></p><p><strong>Total Rooms:</strong> <span id="room-total"></span></p><p><strong>Available Rooms:</strong> <span id="room-available"></span></p>';
+                        roomDescriptionSpan.textContent = '';
+                        roomAmenitiesSpan.textContent = '';
+                        // Removed: roomTotalSpan.textContent = '';
+                        // Removed: roomAvailableSpan.textContent = '';
+                        roomTypes.forEach(roomType => {
+                            const option = document.createElement('option');
+                            option.value = roomType.id;
+                            option.textContent =
+                                `${roomType.name} (Price: ${parseFloat(roomType.default_price).toFixed(2)} USD)`;
+                            option.dataset.defaultPrice = roomType.default_price;
+                            option.dataset.description = roomType.description || '';
+                            option.dataset.amenities = roomType.amenities || '';
+                            option.dataset.totalRooms = roomType.total_rooms || '';
+                            option.dataset.availableRooms = roomType.available_rooms || '';
+                            roomTypeSelect.appendChild(option);
+                        });
+                    });
+            } else {
+                roomTypeSelect.innerHTML = '<option value="">Select Room Type</option>';
+                roomTypeSelect.disabled = true;
+                roomDetailsContainer.innerHTML =
+                    '<h5>Room Details:</h5><p><strong>Description:</strong> <span id="room-description"></span></p><p><strong>Amenities:</strong> <span id="room-amenities"></span></p><p><strong>Total Rooms:</strong> <span id="room-total"></span></p><p><strong>Available Rooms:</strong> <span id="room-available"></span></p>';
+                roomDescriptionSpan.textContent = '';
+                roomAmenitiesSpan.textContent = '';
+                roomTotalSpan.textContent = '';
+                roomAvailableSpan.textContent = '';
+            }
+        });
+
+        roomTypeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const description = selectedOption.dataset.description;
+            const amenities = selectedOption.dataset.amenities;
+            const totalRooms = selectedOption.dataset.totalRooms;
+            const availableRooms = selectedOption.dataset.availableRooms;
+
+            console.log('--- Room Type Changed ---');
+            console.log('Selected Option Value:', this.value);
+            console.log('Description from dataset:', description);
+            console.log('Amenities from dataset:', amenities);
+            console.log('Total Rooms from dataset:', totalRooms);
+            console.log('Available Rooms from dataset:', availableRooms);
+
+            if (roomDescriptionSpan) {
+                roomDescriptionSpan.textContent = description || 'No description available.';
+                console.log('Description span updated to:', roomDescriptionSpan.textContent);
+            } else {
+                console.log('roomDescriptionSpan not found.');
+            }
+
+            if (roomAmenitiesSpan) {
+                roomAmenitiesSpan.textContent = amenities || 'No amenities listed.';
+                try {
+                    const amenitiesArray = JSON.parse(amenities);
+                    roomAmenitiesSpan.textContent = amenitiesArray.join(', ') || 'No amenities listed.';
+                    console.log('Amenities span updated to:', roomAmenitiesSpan.textContent);
+                } catch (e) {
+                    console.log('Amenities is not valid JSON:', amenities);
+                }
+            } else {
+                console.log('roomAmenitiesSpan not found.');
+            }
+
+            if (roomTotalSpan) {
+                roomTotalSpan.textContent = totalRooms || 'N/A';
+                console.log('Total Rooms span updated to:', roomTotalSpan.textContent);
+            } else {
+                console.log('roomTotalSpan not found.');
+            }
+
+            if (roomAvailableSpan) {
+                roomAvailableSpan.textContent = availableRooms || 'N/A';
+                console.log('Available Rooms span updated to:', roomAvailableSpan.textContent);
+            } else {
+                console.log('roomAvailableSpan not found.');
+            }
+
+            checkAvailability(); // Call checkAvailability when room type changes
+        });
+
+        function checkAvailability() {
+            const checkInDateInput = document.getElementById('check_in_date');
+            const checkOutDateInput = document.getElementById('check_out_date');
+            const hotelSelect = document.getElementById('hotel_id');
+            const roomTypeSelect = document.getElementById('room_type_id');
+            const availabilityMessageDiv = document.getElementById('availability-message');
+
+            const checkInDate = checkInDateInput.value;
+            const checkOutDate = checkOutDateInput.value;
+            const hotelId = hotelSelect.value;
+            const roomTypeId = roomTypeSelect.value;
+
+            console.log('--- Checking Availability ---');
+            console.log('hotelId:', hotelId);
+            console.log('roomTypeId:', roomTypeId);
+            console.log('checkInDate:', checkInDate);
+            console.log('checkOutDate:', checkOutDate);
+
+            if (checkInDate && checkOutDate && hotelId && roomTypeId) {
+                fetch('/user/accommodation/check-room-availability', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            hotelId: hotelId,
+                            roomTypeId: roomTypeId,
+                            checkInDate: checkInDate,
+                            checkOutDate: checkOutDate
+                        })
                     })
+                    .then(response => response.json())
                     .then(data => {
-                        const container = document.getElementById('room-details');
-                        if (data && data.length > 0) {
-                            data.forEach((room, index) => {
-                                const roomCard = document.createElement('div');
-                                roomCard.classList.add('col-md-4', 'mb-3');
-                                roomCard.innerHTML = `
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${room.room_type}</h5>
-                                            <p class="card-text"><strong>Price Per Day:</strong> ${room.price} $</p>
-                                            <p class="card-text"><strong>Total Rooms:</strong> ${room.total_rooms}</p>
-                                            <p class="card-text"><strong>Available Rooms:</strong> ${room.available_rooms}</p>
-                                            <p class="card-text"><strong>Description:</strong> ${room.description}</p>
-                                            <button type="button" class="btn btn-primary select-room-btn" data-index="${index}" data-room-id="${room.id}">
-                                                Select Room
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
-                                container.appendChild(roomCard);
-                            });
+                        console.log('Availability Response:', data);
+                        if (data.available) {
+                            availabilityMessageDiv.textContent = 'Room type is available for these dates.';
+                            availabilityMessageDiv.className = 'text-success';
                         } else {
-                            container.innerHTML = '<p>No rooms available for this hotel.</p>';
+                            availabilityMessageDiv.textContent = data.error ||
+                                'This room type is not available for the selected dates.';
+                            availabilityMessageDiv.className = 'text-danger';
                         }
                     })
                     .catch(error => {
-                        console.error('Error fetching room details:', error);
-                        document.getElementById('room-details').innerHTML =
-                            '<p class="text-danger">Error loading room details. Try again later.</p>';
+                        console.error('Error checking availability:', error);
+                        availabilityMessageDiv.textContent = 'Error checking availability.';
+                        availabilityMessageDiv.className = 'text-warning';
                     });
             } else {
-                document.getElementById('room-details-container').style.display = 'none';
+                availabilityMessageDiv.textContent = ''; // Clear message if dates are incomplete
+                availabilityMessageDiv.className = ''; // Clear any previous class
+                console.log('Missing parameters for availability check.');
             }
-        });
+        }
 
-        document.getElementById('room-details').addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('select-room-btn')) {
-                const roomCard = e.target.closest('.card-body');
-                const roomType = roomCard.querySelector('.card-title').innerText;
-                const priceText = roomCard.querySelectorAll('.card-text')[0].innerText;
-                const totalRoomsText = roomCard.querySelectorAll('.card-text')[1].innerText;
-                const availableRoomsText = roomCard.querySelectorAll('.card-text')[2].innerText;
-                const descriptionText = roomCard.querySelectorAll('.card-text')[3].innerText;
+        checkInDateInput.addEventListener('change', checkAvailability);
+        checkOutDateInput.addEventListener('change', checkAvailability);
+        hotelSelect.addEventListener('change', checkAvailability);
+        // checkAvailability is now called when roomTypeSelect changes
 
-                const price = priceText.split(':')[1].replace('$', '').trim();
-                const totalRooms = totalRoomsText.split(':')[1].trim();
-                const availableRooms = availableRoomsText.split(':')[1].trim();
-                const description = descriptionText.split(':')[1].trim();
-
-                document.getElementById('selected_room_type').value = roomType;
-                document.getElementById('selected_price').value = price;
-                document.getElementById('selected_total_rooms').value = totalRooms;
-                document.getElementById('selected_available_rooms').value = availableRooms;
-                document.getElementById('selected_description').value = description;
-
-                const buttons = document.querySelectorAll('.select-room-btn');
-                buttons.forEach(button => {
-                    button.textContent = 'Select Room';
-                    button.disabled = false;
-                });
-                e.target.textContent = 'Selected';
-                e.target.disabled = true;
-
-                alert(`Room "${roomType}" Selected!`);
-            }
-        });
+        // Initial state: disable dependent dropdowns
+        stateSelect.disabled = true;
+        hotelSelect.disabled = true;
+        roomTypeSelect.disabled = true;
+    });
     </script>
+
 </body>
 
 </html>

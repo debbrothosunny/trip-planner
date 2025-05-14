@@ -3,11 +3,11 @@ $header_title = "Create Transportation";
 $content = __DIR__ . '/dashboard.php'; // Adjust if needed
 include __DIR__ . '/../backend/layouts/app.php';
 
-// Assuming your controller fetches the list of trips
-// and makes it available as the $trips variable
-// Example (you might need to adjust this based on your framework):
-// $tripModel = new TripModel();
-// $trips = $tripModel->getAll();
+
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
 ?>
 
 
@@ -16,12 +16,13 @@ include __DIR__ . '/../backend/layouts/app.php';
     <h1 class="mb-4">Add New Transportation</h1>
 
     <form @submit.prevent="submitForm">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token); ?>">
         <div class="mb-3">
             <label for="trip_id" class="form-label">Trip Name</label>
             <select class="form-select w-100" id="trip_id" v-model="formData.trip_id" required>
                 <option value="" disabled selected>Select Trip</option>
                 <?php foreach ($trips as $trip): ?>
-                <option value="<?php echo $trip['id']; ?>"><?php echo $trip['name']; ?></option>
+                <option value="<?php echo $trip['id']; ?>"><?php echo htmlspecialchars($trip['name']); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -34,6 +35,7 @@ include __DIR__ . '/../backend/layouts/app.php';
                 <option value="Train">Train</option>
                 <option value="Flight">Flight</option>
                 <option value="Ship">Ship</option>
+                <option value="Local">Local</option>
             </select>
         </div>
 
@@ -83,8 +85,7 @@ include __DIR__ . '/../backend/layouts/app.php';
 
 <script>
 const {
-    createApp,
-    ref
+    createApp
 } = Vue;
 
 createApp({
@@ -99,19 +100,33 @@ createApp({
                 departure_date: '',
                 arrival_date: '',
                 booking_reference: '',
-                amount: ''
+                amount: '',
+                csrf_token: '' // Initialize as empty string first
             }
         };
+    },
+    mounted() {
+        // Safely access the DOM AFTER component is mounted
+        const csrfInput = document.querySelector('input[name="csrf_token"]');
+        if (csrfInput) {
+            this.formData.csrf_token = csrfInput.value;
+        } else {
+            console.error('CSRF token input not found in the DOM.');
+        }
     },
     methods: {
         submitForm() {
             console.log('Form Data:', this.formData);
 
+            const formData = new URLSearchParams();
+            for (const key in this.formData) {
+                formData.append(key, this.formData[key]);
+            }
+
             fetch('/user/transportation/store', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': 'YOUR_CSRF_TOKEN_HERE', // Important for security
                     },
                     body: JSON.stringify(this.formData),
                 })
@@ -132,11 +147,9 @@ createApp({
                             showConfirmButton: false,
                             timer: 1500
                         }).then(() => {
-                            window.location.href =
-                            '/user/transportation'; // Redirect after the alert
+                            window.location.href = '/user/transportation/create';
                         });
                     } else {
-                        console.error('Error creating transportation:', data);
                         Swal.fire({
                             icon: 'error',
                             title: 'Error!',
@@ -145,7 +158,6 @@ createApp({
                     }
                 })
                 .catch(error => {
-                    console.error('Fetch error:', error);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error!',

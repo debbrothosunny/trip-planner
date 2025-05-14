@@ -6,38 +6,6 @@ include __DIR__ . '/../backend/layouts/app.php';
 $expenses_json = json_encode($expenses);
 ?>
 <style>
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f2f5;
-}
-
-.sidebar {
-    width: 250px;
-    background: #2c3e50;
-    color: white;
-    height: 100vh;
-    position: fixed;
-    padding-top: 20px;
-}
-
-.sidebar a {
-    color: white;
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    text-decoration: none;
-    transition: 0.3s;
-}
-
-.sidebar a i {
-    margin-right: 10px;
-}
-
-.sidebar a:hover,
-.sidebar a.active {
-    background: #34495e;
-}
-
 .content {
     margin-left: 270px;
     padding: 20px;
@@ -79,7 +47,7 @@ body {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="expense in expenses" :key="expense.id">
+                            <tr v-for="expense in expenses" :key="expense.id" class="text-white">
                                 <td>{{ expense.trip_name }}</td>
                                 <td>{{ expense.category }}</td>
                                 <td>{{ formatCurrency(expense.amount) }}</td>
@@ -88,10 +56,13 @@ body {
                                 <td>{{ formatDate(expense.expense_date) }}</td>
                                 <td>
                                     <div class="d-flex justify-content-center gap-2">
-                                        <button @click="openEditModal(expense, $event)"
-                                            class="btn btn-sm btn-primary">Edit</button>
-                                        <button @click="confirmDelete(expense.id)" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash"></i>
+                                        <button @click="openEditModal(expense, $event)" class="btn btn-sm btn-primary"
+                                            title="Edit">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </button>
+                                        <button @click="confirmDelete(expense.id)" class="btn btn-danger btn-sm"
+                                            title="Delete">
+                                            <i class="fas fa-trash me-1"></i> Delete
                                         </button>
                                     </div>
                                 </td>
@@ -397,7 +368,7 @@ body {
                     });
             },
             fetchTrips() {
-                fetch('/user/trip/data')
+                fetch('/user/expense/data')
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {

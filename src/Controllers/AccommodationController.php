@@ -1,415 +1,272 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Models\Accommodation;
 use App\Models\Hotel;
-use App\Models\HotelRoom;
 use App\Models\Trip;
-use Core\Database;
-use PDO;
-use PDOException;
-  
-class AccommodationController {
-    private $accommodation;  
-    private $tripModel;    
-    private $db;
+use App\Models\HotelRoom;
+use App\Models\RoomType;
+use Core\Database; // Make sure the Database class is used
+use \DateTime;
+class AccommodationController // Assuming you have a BaseController
+{
+    private $accommodationModel;
     private $hotelModel;
+    private $roomTypeModel;
     private $roomModel;
+    private $tripModel;  
+    private $db; // To store the database connection
 
-    // Constructor to initialize the Accommodation model
-    public function __construct() {
-        $database = Database::getInstance();
-        $this->db = $database->getConnection();
-    
-        // Initialize models with DB connection
+    public function __construct()
+    {
+        $database = Database::getInstance(); // Get the singleton instance of the Database class
+        $this->db = $database->getConnection(); // Get the PDO connection object
+
         $this->tripModel = new Trip($this->db);
-        $this->accommodation = new Accommodation($this->db);
-        $this->hotelModel = new Hotel($this->db);         
-        $this->roomModel = new HotelRoom($this->db);       
+        $this->accommodationModel = new Accommodation($this->db); // Pass the connection
+        $this->hotelModel = new Hotel($this->db);          // Pass the connection
+        $this->roomModel = new HotelRoom($this->db);        // Pass the connection
+        $this->roomTypeModel = new RoomType($this->db); // Instantiate RoomTypeModel and pass the connection
+        session_start(); // Using native PHP sessions
+        // You might want to add middleware for authentication (check if user is logged in)
+        if (!isset($_SESSION['user'])) {
+            header("Location: /"); // Adjust login route as needed
+            exit();
+        }
     }
-    
 
+    /**
+     * Displays the user's accommodations list page.
+     *
+     * @return void
+    */
 
-    public function accommodationList() {
-        session_start();
-    
+    public function accommodationList(): void
+    {
+        // Ensure the user is logged in
         if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
             $_SESSION['error'] = "Please login to view your accommodations.";
-            header("Location: /");
+            header("Location: /"); // Redirect to login page
             exit();
         }
-    
-        $user_id = $_SESSION['user']['id']; 
-    
-        try {
-            // Fetch accommodations from the model
-            $accommodations = $this->accommodation->getAccommodationsByUserId($user_id);
-    
-            // Pass the data to the view
-            $viewPath = __DIR__ . '/../../resources/views/user/accommodation.php'; 
-    
-            if (file_exists($viewPath)) {
-                include($viewPath);
-            } else {
-                echo "View file not found: " . $viewPath;
-            }
-        } catch (PDOException $e) {
-            echo "Database error: " . $e->getMessage();
-        }
-    }
 
-    // Create a new accommodation
-
-    public function fetchHotelsByLocation($location) {
-        $location = urldecode($location); // Decode the location to handle special characters
-    
-        // Fetch hotels based on location
-        $hotels = $this->hotelModel->getHotelsByLocation($location);
-    
-        $hotelDetails = [];
-    
-        foreach ($hotels as $hotel) {
-            // Fetch the rooms for each hotel
-            $rooms = $this->hotelModel->getRoomsByHotel($hotel['id']);
-    
-            // Store hotel and room details in an array
-            $hotelDetails[] = [
-                'hotel_id' => $hotel['id'],
-                'hotel_name' => $hotel['name'],
-                'rooms' => $rooms
-            ];
-        }
-    
-        echo json_encode($hotelDetails); // Return the hotel details as JSON
-    }
-
-    // Fetch rooms for a specific hotel by hotel ID
-    public function fetchHotelRooms($hotelId) {
-        // Fetch the rooms for the given hotel ID
-        $rooms = $this->roomModel->getRoomsByHotel($hotelId);
-
-        if (empty($rooms)) {
-            // If no rooms are found, return a JSON response with an error message
-            header('Content-Type: application/json');
-            echo json_encode(['error' => 'No rooms available for this hotel.']);
-            http_response_code(404); // HTTP status code 404
-            exit;
-        }
-
-        // If rooms are found, return them as a JSON response
-        header('Content-Type: application/json');
-        echo json_encode($rooms); // Send the room data as JSON
-        exit; // Stop further execution
-    }
-    
-    
-
-    
-    
-
-
-    public function accommodationCreate() {
-        session_start();
-    
-        if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
-            $_SESSION['error'] = "Please login first.";
-            header("Location: /");
-            exit();
-        }
-    
-        $userId = $_SESSION['user']['id']; // ✅ Define $userId from session
-    
-        // Load data from DB
-        $locations = $this->hotelModel->getAllLocations();  // Fetch all locations
-        $rooms = $this->roomModel->getAllRooms();           // Fetch all rooms
-        $trips = $this->tripModel->getTripsByUserId($userId); // Fetch trips for the logged-in user
-    
-        // View
-        $viewPath = __DIR__ . '/../../resources/views/user/accommodation_create.php';
-        if (file_exists($viewPath)) {
-            include($viewPath);
-        } else {
-            echo "View not found: $viewPath";
-        }
-    }
-    
-    
-    
-    // Store accommodation data in the database
-    public function storeAccommodation()
-    {
-        session_start();
-        error_log("StoreAccommodation method called");
-    
-        if (!isset($_SESSION['user'])) {
-            header("Location: /");
-            exit();
-        }
-    
-        // Validate input
-        $errors = [];
-    
-        if (empty($_POST['hotel_id'])) {
-            $errors[] = 'Hotel is required.';
-        }
-    
-        if (empty($_POST['room_type'])) {  // Changed to room_type instead of room_id
-            $errors[] = 'Room selection is required.';
-        }
-    
-        if (empty($_POST['check_in_date']) || !strtotime($_POST['check_in_date'])) {
-            $errors[] = 'Valid check-in date is required.';
-        }
-    
-        if (empty($_POST['check_out_date']) || !strtotime($_POST['check_out_date'])) {
-            $errors[] = 'Valid check-out date is required.';
-        }
-    
-        if (!empty($_POST['check_in_date']) && !empty($_POST['check_out_date'])) {
-            $checkIn = strtotime($_POST['check_in_date']);
-            $checkOut = strtotime($_POST['check_out_date']);
-            if ($checkOut < $checkIn) {
-                $errors[] = 'Check-out date must be after or equal to check-in date.';
-            }
-        }
-    
-        if (empty($_POST['trip_id'])) {
-            $errors[] = 'Trip selection is required.';
-        }
-    
-        if (!empty($errors)) {
-            $_SESSION['errors'] = $errors;
-            header("Location: /user/accommodation/create");
-            exit();
-        }
-    
         $userId = $_SESSION['user']['id'];
-        $hotelId = $_POST['hotel_id'];
-        $roomType = $_POST['room_type'];  // Store room_type instead of room_id
-        $checkInDate = $_POST['check_in_date'];
-        $checkOutDate = $_POST['check_out_date'];
-        $status = 0;
-        $tripId = $_POST['trip_id'];  // Get trip_id from the form
-    
-        // Check for overlapping bookings of the same room type in the selected dates
-        $conflictQuery = $this->db->prepare("
-            SELECT * FROM accommodations
-            WHERE room_type = ? AND hotel_id = ? AND (
-                (check_in_date <= ? AND check_out_date >= ?)
-            )
-        ");
-        $conflictQuery->execute([$roomType, $hotelId, $checkOutDate, $checkInDate]);
-    
-        if ($conflictQuery->fetch()) {
-            $_SESSION['sweetalert'] = [
-                'title' => 'Booking Conflict!',
-                'text' => 'This room type is already booked during the selected dates.',
-                'icon' => 'error'
-            ];
-            header("Location: /user/accommodation/create");
-            exit();
-        }
-    
-        // Fetch the price based on the room type
-        $stmt = $this->db->prepare("SELECT price FROM hotel_rooms WHERE room_type = ? AND hotel_id = ?");
-        $stmt->execute([$roomType, $hotelId]);
-        $room = $stmt->fetch(PDO::FETCH_ASSOC);
-        $price = $room ? $room['price'] : 0;
-    
-        // Insert the accommodation booking with room_type and trip_id
-        $result = $this->accommodation->create($userId, $hotelId, $roomType, $checkInDate, $checkOutDate, $status, $tripId);
+        $accommodations = $this->accommodationModel->findByUserId($userId);
 
-    
-        if ($result) {
-            $_SESSION['sweetalert'] = [
-                'title' => 'Success!',
-                'text' => 'Accommodation booked successfully!',
-                'icon' => 'success'
-            ];
-            header("Location: /user/accommodation");
-        } else {
-            $_SESSION['sweetalert'] = [
-                'title' => 'Error!',
-                'text' => 'Failed to book accommodation. Please try again.',
-                'icon' => 'error'
-            ];
-            header("Location: /user/accommodation/create");
-        }
-        exit();
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-
-    
-
-    // Edit accommodation
-    public function accommodationEdit($id) {
-        session_start();
-    
-        if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
-            header("Location: /login"); 
-            exit();
-        }
-    
-        $userId = $_SESSION['user']['id'];
-    
-        // Fetch accommodation details by ID and ensure it belongs to the logged-in user
-        $accommodation = $this->accommodation->getAccommodationByIdAndUser($id, $userId);
-    
-        // If accommodation is not found or doesn't belong to the user, redirect to the list with an error
-        if (!$accommodation) {
-            $_SESSION['sweetalert'] = [ 
-                'title' => 'Error!',
-                'text' => 'Accommodation not found or you do not have permission to edit it.',
-                'icon' => 'error'
-            ];
-            header("Location: /user/accommodation/list");
-            exit();
-        }
-    
-        // Format check-in and check-out date if needed
-        $check_in_date = date("Y-m-d H:i:s", strtotime($accommodation['check_in_date']));
-        $check_out_date = date("Y-m-d H:i:s", strtotime($accommodation['check_out_date']));
-    
-        // Fetch trip, hotel, and room details for the select options
-        $trips = $this->tripModel->getTripsByUserId($userId);
-        $hotels = $this->hotelModel->getAllHotels();
-        $rooms = $this->roomModel->getAllRooms();
-    
         // Define the path to the view
-        $viewPath = __DIR__ . '/../../resources/views/user/accommodation_edit.php';
-    
+        $viewPath = __DIR__ . '/../../resources/views/user/accommodation.php';
+
+        // Check if the view file exists and include it
         if (file_exists($viewPath)) {
-            include $viewPath;
+            include($viewPath); // Include the view file, $accommodations is already available
         } else {
+            // Handle the case where the view file is missing
             echo "View file not found: " . $viewPath;
         }
     }
-    
 
-    // Update accommodation
-    public function update($id) {
-        session_start();
-    
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $trip_id = htmlspecialchars($_POST['trip_id']);
-            $hotel_id = htmlspecialchars($_POST['hotel_id']);
-            $room_id = htmlspecialchars($_POST['room_id']);
-            $check_in_date = htmlspecialchars($_POST['check_in_date']);
-            $check_out_date = htmlspecialchars($_POST['check_out_date']);
-            $price = htmlspecialchars($_POST['price']);
-            $status = htmlspecialchars($_POST['status']);
-    
-            // Validate required fields
-            if (empty($trip_id) || empty($hotel_id) || empty($room_id) || empty($check_in_date) || empty($check_out_date) || empty($price)) {
-                $_SESSION['error'] = "All fields are required!";
-                header("Location: /user/accommodation");
-                exit();
-            }
-    
-            // Check for valid date format (Y-m-d H:i:s)
-            if (!strtotime($check_in_date) || !strtotime($check_out_date)) {
-                $_SESSION['error'] = "Invalid date format! Please use a valid date format.";
-                header("Location: /user/accommodation");
-                exit();
-            }
-    
-            // Sanitize and format dates for saving to the database
-            $check_in_date = date("Y-m-d H:i:s", strtotime($check_in_date));
-            $check_out_date = date("Y-m-d H:i:s", strtotime($check_out_date));
-    
-            try {
-                $query = "UPDATE accommodations 
-                          SET trip_id = :trip_id, hotel_id = :hotel_id, room_id = :room_id, 
-                              check_in_date = :check_in_date, check_out_date = :check_out_date, 
-                              price = :price, status = :status
-                          WHERE id = :id";
-                $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':trip_id', $trip_id);
-                $stmt->bindParam(':hotel_id', $hotel_id);
-                $stmt->bindParam(':room_id', $room_id);
-                $stmt->bindParam(':check_in_date', $check_in_date);
-                $stmt->bindParam(':check_out_date', $check_out_date);
-                $stmt->bindParam(':price', $price);
-                $stmt->bindParam(':status', $status);
-                $stmt->bindParam(':id', $id);
-    
-                if ($stmt->execute()) {
-                    $_SESSION['sweetalert'] = [
-                        'title' => 'Success!',
-                        'text' => 'Accommodation updated successfully!',
-                        'icon' => 'success'
-                    ];
-                    header("Location: /user/accommodation");
-                    exit();
-                } else {
-                    $_SESSION['sweetalert'] = [
-                        'title' => 'Error!',
-                        'text' => 'Failed to update the accommodation. Please try again.',
-                        'icon' => 'error'
-                    ];
-                    header("Location: /user/accommodation");
-                    exit();
-                }
-            } catch (PDOException $e) {
-                $_SESSION['sweetalert'] = [
-                    'title' => 'Error!',
-                    'text' => 'Database error: ' . $e->getMessage(),
-                    'icon' => 'error'
-                ];
-                header("Location: /user/accommodation");
-                exit();
-            }
+   
+    public function accommodationCreate(): void
+    {
+        // Ensure the user is logged in (you likely have this already)
+        if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
+            $_SESSION['error'] = "Please login to create a booking.";
+            header("Location: /"); // Redirect to login page
+            exit();
+            
+        }
+
+        $userId = $_SESSION['user']['id'];
+
+        // Fetch data for dropdowns
+        $countries = $this->hotelModel->findAllCountries(); // Assuming this works
+        $trips = $this->tripModel->getTripsByUserId($userId); // Assuming this works
+        $roomTypes = $this->roomTypeModel->findAllActive(); // Assuming you have a roomTypeModel and a method to fetch active room types
+       
+        
+        // Define the path to the view
+        $viewPath = __DIR__ . '/../../resources/views/user/accommodation_create.php';
+
+        // Check if the view file exists and include it
+        if (file_exists($viewPath)) {
+            include($viewPath); // Include the view file and pass the data ($countries, $trips, $roomTypes)
+        } else {
+            // Handle the case where the view file is missing
+            echo "View file not found: " . $viewPath;
         }
     }
-    
-    
-    // Delete accommodation
-    public function delete($id) {
-        session_start();
-    
-        // Check if the accommodation exists
-        $query = "SELECT * FROM accommodations WHERE id = :id LIMIT 1";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-    
-        $accommodation = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-        if (!$accommodation) {
-            echo json_encode(['success' => false, 'message' => 'Accommodation not found.']);
+
+
+    public function getStatesByCountry(int $countryId): void
+    {
+        header('Content-Type: application/json');
+        echo json_encode($this->hotelModel->findStatesByCountryId($countryId));
+    }
+
+    public function getHotelsByCountryAndState(int $countryId, int $stateId): void
+    {
+        header('Content-Type: application/json');
+        echo json_encode($this->hotelModel->findHotelsByCountryAndState($countryId, $stateId));
+    }
+
+    public function getRoomTypesByHotel(int $hotelId): void
+    {
+        header('Content-Type: application/json');
+        echo json_encode($this->roomModel->findRoomTypesByHotelId($hotelId));
+    }
+
+   
+    public function storeAccommodation(): void
+    {
+        // Ensure the user is logged in
+        if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
+            $_SESSION['error'] = 'Please log in to make a booking.';
+            header("Location: /"); // Redirect to login page
             exit();
         }
-    
-        // Delete the accommodation
-        $query = "DELETE FROM accommodations WHERE id = :id";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-    
-        try {
-            if ($stmt->execute()) {
-                echo json_encode(['success' => true, 'message' => 'Accommodation deleted successfully.']);
-                exit();
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Failed to delete accommodation. Please try again.']);
-                exit();
-            }
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+
+        $userId = $_SESSION['user']['id'];
+        $hotelId = $_POST['hotel_id'] ?? null;
+        $roomTypeId = $_POST['room_type_id'] ?? null;
+        $checkInDate = $_POST['check_in_date'] ?? null;
+        $checkOutDate = $_POST['check_out_date'] ?? null;
+        $tripId = $_POST['trip_id'] ?? null;
+
+        // Basic validation
+        if (empty($hotelId) || empty($roomTypeId) || empty($checkInDate) || empty($checkOutDate) || empty($tripId)) {
+            $_SESSION['error'] = 'Please fill in all required fields.';
+            header("Location: /user/accommodation/create");
+            exit();
+        }
+
+        // Validate date formats
+        if (!strtotime($checkInDate) || !strtotime($checkOutDate)) {
+            $_SESSION['error'] = 'Invalid date format.';
+            header("Location: /user/accommodation/create");
+            exit();
+        }
+
+        // Ensure check-out date is after check-in date
+        if (strtotime($checkOutDate) <= strtotime($checkInDate)) {
+            $_SESSION['error'] = 'Check-out date must be after check-in date.';
+            header("Location: /user/accommodation/create");
+            exit();
+        }
+
+        // Adjust date formats for database storage
+        $checkInDate = (new DateTime($checkInDate))->format('Y-m-d H:i:s');
+        $checkOutDate = (new DateTime($checkOutDate))->format('Y-m-d H:i:s');
+
+        // Fetch the price from the hotel_rooms table
+        $hotelRoomPrice = $this->roomModel->getPriceByHotelAndType($hotelId, $roomTypeId);
+
+        if (!$hotelRoomPrice || $hotelRoomPrice['price'] === null) {
+            $_SESSION['error'] = 'Selected room type not found or price not set for this hotel.';
+            header("Location: /user/accommodation/create");
+            exit();
+        }
+
+        $numberOfNights = (new DateTime($checkInDate))->diff(new DateTime($checkOutDate))->days;
+        $totalPrice = floatval($hotelRoomPrice['price']) * $numberOfNights;
+
+        // Create the booking (the model will handle finding an available room)
+        $bookingResult = $this->accommodationModel->create(
+            $userId,
+            $tripId,
+            $hotelId,
+            $roomTypeId, // Pass the roomTypeId so the model can find an available room
+            $checkInDate,
+            $checkOutDate,
+            $totalPrice,
+            '1' // Default status: Pending
+        );
+
+        if ($bookingResult) {
+            $_SESSION['success'] = 'Booking created successfully!';
+            header("Location: /user/accommodation"); // Redirect to the accommodations list page
+            exit();
+        } else {
+            $_SESSION['error'] = 'Failed to create booking. No available room of the selected type for the chosen dates.';
+            header("Location: /user/accommodation/create");
             exit();
         }
     }
+
+   
+
+
+    public function checkRoomAvailability(): void
+    {
+        // Check if it's an AJAX request
+        if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+            header('HTTP/1.1 403 Forbidden');
+            echo 'Direct access not allowed.';
+            exit();
+        }
+
+        // Get the JSON data from the request body
+        $json_data = file_get_contents('php://input');
+        $data = json_decode($json_data, true);
+
+        $roomTypeId = $data['roomTypeId'] ?? null; // Changed from $roomId
+        $checkInDate = $data['checkInDate'] ?? null;
+        $checkOutDate = $data['checkOutDate'] ?? null;
+        $hotelId = $data['hotelId'] ?? null; // Assuming you need hotelId for availability check
+
+        // Basic validation
+        if (empty($roomTypeId) || empty($checkInDate) || empty($checkOutDate) || empty($hotelId)) {
+            $this->sendJsonResponse(['available' => false, 'error' => 'Missing parameters']);
+            return;
+        }
+
+        // Log the received parameters for debugging
+        error_log("checkRoomAvailability - Received Hotel ID: " . $hotelId);
+        error_log("checkRoomAvailability - Received Room Type ID: " . $roomTypeId);
+        error_log("checkRoomAvailability - Received Check-in: " . $checkInDate);
+        error_log("checkRoomAvailability - Received Check-out: " . $checkOutDate);
+
+        // Call the model to check availability
+        // Assuming you have a method in your Accommodation model to check availability
+        // based on hotel ID, room type ID, and dates.
+        $available = $this->accommodationModel->isRoomAvailableByTypeAndHotel(
+            $hotelId,
+            $roomTypeId,
+            $checkInDate,
+            $checkOutDate
+        );
+
+        $this->sendJsonResponse(['available' => $available]);
+    }
+
+    private function sendJsonResponse(array $data): void
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    }
+
+
+    
+    
+    // public function confirmation(int $id): void
+    // {
+    //     $booking = $this->accommodationModel->find($id);
+
+    //     if (!$booking || $booking['user_id'] !== ($_SESSION['user']['id'] ?? null)) {
+    //         // Handle booking not found or unauthorized access
+    //         header("Location: /user/accommodation");
+    //         exit();
+    //     }
+
+    //     $hotel = $this->hotelModel->find($booking['hotel_id']);
+    //     $room = $this->roomModel->find($booking['room_id']);
+
+    //     echo $this->view('booking/confirmation', [
+    //         'booking' => $booking,
+    //         'hotel' => $hotel,
+    //         'room' => $room,
+    //     ]);
+    // }
+
+    // You can add more actions here for editing, deleting, etc.
 }
-
-

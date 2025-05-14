@@ -18,7 +18,7 @@ class Transportation
      public function create($data)
      {
          // Prepare SQL query to insert new transportation record
-         $query = "INSERT INTO transportation (trip_id, type, company_name, departure_location, arrival_location, departure_date, arrival_date, booking_reference, user_id, amount)
+         $query = "INSERT INTO transportations (trip_id, type, company_name, departure_location, arrival_location, departure_date, arrival_date, booking_reference, user_id, amount)
                    VALUES (:trip_id, :type, :company_name, :departure_location, :arrival_location, :departure_date, :arrival_date, :booking_reference, :user_id, :amount)";
      
          $stmt = $this->db->prepare($query);
@@ -59,17 +59,17 @@ class Transportation
     public function getTripsByUserId($userId)
     {
         $query = "SELECT 
-                    transportation.id, 
+                    transportations.id, 
                     trips.name AS trip_name, 
-                    transportation.company_name, 
-                    transportation.departure_location, 
-                    transportation.arrival_location, 
-                    transportation.departure_date, 
-                    transportation.arrival_date, 
-                    transportation.booking_reference,
-                    transportation.amount  -- Include amount in the result
-                  FROM transportation
-                  JOIN trips ON transportation.trip_id = trips.id
+                    transportations.company_name, 
+                    transportations.departure_location, 
+                    transportations.arrival_location, 
+                    transportations.departure_date, 
+                    transportations.arrival_date, 
+                    transportations.booking_reference,
+                    transportations.amount  -- Include amount in the result
+                  FROM transportations
+                  JOIN trips ON transportations.trip_id = trips.id
                   WHERE trips.user_id = ?";
     
         $stmt = $this->db->prepare($query);
@@ -88,14 +88,14 @@ class Transportation
     }
     public function getById($id)
     {
-        $stmt = $this->db->prepare("SELECT * FROM transportation WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM transportations WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function update($id, $data)
     {
-        $stmt = $this->db->prepare("UPDATE transportation SET trip_id = ?, type = ?, company_name = ?, departure_location = ?, arrival_location = ?, departure_date = ?, arrival_date = ?, booking_reference = ?, user_id = ?, amount = ? WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE transportations SET trip_id = ?, type = ?, company_name = ?, departure_location = ?, arrival_location = ?, departure_date = ?, arrival_date = ?, booking_reference = ?, user_id = ?, amount = ? WHERE id = ?");
         return $stmt->execute([
             $data['trip_id'], $data['type'], $data['company_name'],
             $data['departure_location'], $data['arrival_location'], $data['departure_date'],
@@ -105,7 +105,7 @@ class Transportation
 
     public function delete($id)
     {
-        $stmt = $this->db->prepare("DELETE FROM transportation WHERE id = ?");
+        $stmt = $this->db->prepare("DELETE FROM transportations WHERE id = ?");
         return $stmt->execute([$id]);
     }
 

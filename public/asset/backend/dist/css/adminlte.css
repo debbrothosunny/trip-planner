@@ -1862,7 +1862,7 @@ pre code {
 .table-light,
 .table-light > th,
 .table-light > td {
-  background-color: #fdfdfe;
+  background-color: #000000;
 }
 
 .table-light th,

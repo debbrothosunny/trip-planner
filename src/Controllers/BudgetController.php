@@ -55,7 +55,7 @@ class BudgetController
                 $totalAccommodation = $accommodationData['totalAccommodation'] ?? 0.00;
     
                 // Fetch Total Transportation cost for each trip
-                $transportationQuery = "SELECT SUM(amount) AS totalTransportation FROM transportation WHERE trip_id = :trip_id";
+                $transportationQuery = "SELECT SUM(amount) AS totalTransportation FROM transportations WHERE trip_id = :trip_id";
                 $stmt = $this->db->prepare($transportationQuery);
                 $stmt->bindParam(':trip_id', $trip['id'], PDO::PARAM_INT);
                 $stmt->execute();

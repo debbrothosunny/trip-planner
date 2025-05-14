@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use PDO;
+use Exception;
+use PDOException;
 use Core\Database; // Assuming Database class handles the DB connection
 
 class HotelRoom {
@@ -31,15 +33,41 @@ class HotelRoom {
     }
 
     // Create a new room
-    public function createRoom($hotel_id, $room_type, $price, $total_rooms, $available_rooms, $description) {
-        $stmt = $this->db->prepare("INSERT INTO hotel_rooms (hotel_id, room_type, price, total_rooms, available_rooms, description) VALUES (?, ?, ?, ?, ?, ?)");
-        return $stmt->execute([$hotel_id, $room_type, $price, $total_rooms, $available_rooms, $description]);
+    public function createRoom($hotel_id, $room_type_id, $capacity, $price, $description, $total_rooms, $available_rooms, $status, $amenities) {
+        $stmt = $this->db->prepare("
+            INSERT INTO hotel_rooms (
+                hotel_id,
+                room_type_id,
+                capacity,
+                price,
+                description,
+                total_rooms,
+                available_rooms,
+                status,
+                amenities,
+                created_at,
+                updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ");
+        return $stmt->execute([$hotel_id, $room_type_id, $capacity, $price, $description, $total_rooms, $available_rooms, $status, $amenities]);
     }
 
     // Update an existing room
-    public function updateRoom($id, $hotel_id, $room_type, $price, $total_rooms, $available_rooms, $description) {
-        $stmt = $this->db->prepare("UPDATE hotel_rooms SET hotel_id = ?, room_type = ?, price = ?, total_rooms = ?, available_rooms = ?, description = ? WHERE id = ?");
-        return $stmt->execute([$hotel_id, $room_type, $price, $total_rooms, $available_rooms, $description, $id]);
+    public function updateRoom($id, $hotel_id, $room_type_id, $capacity, $price, $description, $total_rooms, $available_rooms, $status, $amenities) {
+        $stmt = $this->db->prepare("
+            UPDATE hotel_rooms
+            SET hotel_id = ?,
+                room_type_id = ?,
+                capacity = ?,
+                price = ?,
+                description = ?,
+                total_rooms = ?,
+                available_rooms = ?,
+                status = ?,
+                amenities = ?
+            WHERE id = ?
+        ");
+        return $stmt->execute([$hotel_id, $room_type_id, $capacity, $price, $description, $total_rooms, $available_rooms, $status, $amenities, $id]);
     }
 
     // Delete a room
@@ -76,52 +104,105 @@ class HotelRoom {
 
 
 
-    public function decreaseAvailableAndTotalRooms($hotelId, $roomType, $totalRooms)
+    public function decreaseAvailableAndTotalRooms(int $hotelId, int $roomId, int $bookedRooms): bool
     {
-        // First, get the current total_rooms and available_rooms to make sure they are correct
         $sql = "
-            SELECT total_rooms, available_rooms 
-            FROM hotel_rooms
-            WHERE hotel_id = :hotelId AND room_type = :roomType
+            UPDATE hotel_rooms
+            SET
+                available_rooms = available_rooms - :booked,
+                total_rooms = total_rooms - :booked
+            WHERE
+                hotel_id = :hotel_id AND id = :room_id AND available_rooms >= :booked AND total_rooms >= :booked
         ";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':hotelId', $hotelId, PDO::PARAM_INT);
-        $stmt->bindParam(':roomType', $roomType, PDO::PARAM_STR);
+        $stmt->bindParam(':hotel_id', $hotelId, PDO::PARAM_INT);
+        $stmt->bindParam(':room_id', $roomId, PDO::PARAM_INT);
+        $stmt->bindParam(':booked', $bookedRooms, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function getHotelRoomDetails(int $roomId): array|false
+    {
+        $sql = "SELECT * FROM hotel_rooms WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id', $roomId, PDO::PARAM_INT);
         $stmt->execute();
-        $roomData = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-        // Check if we have room data
-        if ($roomData) {
-            $newAvailableRooms = $roomData['available_rooms'] - $totalRooms;
-            $newTotalRooms = $roomData['total_rooms'] - $totalRooms;
-    
-            // Ensure that the available and total rooms cannot go below zero
-            if ($newAvailableRooms < 0) {
-                $newAvailableRooms = 0;
-            }
-            if ($newTotalRooms < 0) {
-                $newTotalRooms = 0;
-            }
-    
-            // Now update the hotel_rooms table with the new values
-            $updateSql = "
-                UPDATE hotel_rooms
-                SET available_rooms = :newAvailableRooms,
-                    total_rooms = :newTotalRooms
-                WHERE hotel_id = :hotelId AND room_type = :roomType
-            ";
-    
-            $stmt = $this->db->prepare($updateSql);
-            $stmt->bindParam(':newAvailableRooms', $newAvailableRooms, PDO::PARAM_INT);
-            $stmt->bindParam(':newTotalRooms', $newTotalRooms, PDO::PARAM_INT);
-            $stmt->bindParam(':hotelId', $hotelId, PDO::PARAM_INT);
-            $stmt->bindParam(':roomType', $roomType, PDO::PARAM_STR);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function findAll(): array
+    {
+        $sql = "SELECT hr.id, rt.name AS room_type, hr.price, hr.amenities
+                FROM hotel_rooms hr
+                JOIN room_types rt ON hr.room_type_id = rt.id";
+        try {
+            $stmt = $this->db->prepare($sql);
             $stmt->execute();
-        } else {
-            // Handle case where no room data was found
-            throw new Exception("Room data not found for hotel_id: $hotelId and room_type: $roomType");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching all hotel rooms: " . $e->getMessage());
+            return [];
         }
     }
-    
 
+    public function find(int $id): array|false
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE id = :id LIMIT 1";
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error finding hotel room by ID: " . $e->getMessage());
+            return false;
+        }
+    }
+    // Search function
+    public function searchRoomsByName($searchTerm) {
+        $this->db->query("SELECT hr.*, h.name AS hotel_name 
+                           FROM hotel_rooms hr
+                           JOIN hotels h ON hr.hotel_id = h.id
+                           WHERE h.name LIKE :term OR hr.room_type LIKE :term");
+        $this->db->bind(':term', '%' . $searchTerm . '%');
+        return $this->db->fetchAll(); // Assuming you have a fetchAll() method
+    }
+
+
+
+
+
+    public function findRoomTypesByHotelId(int $hotelId): array
+    {
+        $sql = "SELECT DISTINCT
+                        hr.room_type_id AS id,
+                        rt.name,
+                        hr.price AS default_price,
+                        hr.description,
+                        hr.amenities,
+                        hr.total_rooms,
+                        hr.available_rooms
+                FROM hotel_rooms hr
+                JOIN room_types rt ON hr.room_type_id = rt.id
+                WHERE hr.hotel_id = :hotel_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':hotel_id', $hotelId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPriceByHotelAndType(int $hotelId, int $roomTypeId): ?array
+    {
+        $sql = "SELECT price
+                FROM hotel_rooms
+                WHERE hotel_id = :hotel_id
+                  AND room_type_id = :room_type_id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':hotel_id', $hotelId, PDO::PARAM_INT);
+        $stmt->bindParam(':room_type_id', $roomTypeId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
 }

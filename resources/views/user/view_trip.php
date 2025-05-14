@@ -6,59 +6,10 @@ $content = __DIR__ . '/dashboard.php'; // Load actual content (you might need to
 include __DIR__ . '/../backend/layouts/app.php'; // Adjust path as needed
 ?>
 
-<style>
-/* Your existing styles remain unchanged */
-body {
-    display: flex;
-}
-
-.sidebar {
-    width: 250px;
-    background: #2c3e50;
-    color: white;
-    height: 100vh;
-    position: fixed;
-    padding-top: 20px;
-}
-
-.sidebar a {
-    color: white;
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    text-decoration: none;
-    transition: 0.3s;
-}
-
-.sidebar a i {
-    margin-right: 10px;
-}
-
-.sidebar a:hover,
-.sidebar a.active {
-    background: #34495e;
-}
-
-.content {
-    margin-left: 270px;
-    padding: 20px;
-    width: 100%;
-}
-</style>
-
 <div id="app" class="content">
     <div class="container mt-4">
-        <?php
-        if (isset($_SESSION['success'])) {
-            echo "<div class='alert alert-success'>" . $_SESSION['success'] . "</div>";
-            unset($_SESSION['success']);
-        }
-        if (isset($_SESSION['error'])) {
-            echo "<div class='alert alert-danger'>" . $_SESSION['error'] . "</div>";
-            unset($_SESSION['error']);
-        }
-        ?>
-        
+
+
         <h2 class="mb-3">Trip</h2>
         <a href="/user/create-trip" class="btn btn-success mb-3">+ Add New Trip</a>
 
@@ -67,34 +18,47 @@ body {
         </div>
 
         <div v-else>
-            <table class="table table-bordered">
+            <table class="table table-bordered trip-style-table">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Trip Name</th>
+                        <th>Destination</th>
+                        <th>Trip Style</th>
                         <th>Start Date</th>
                         <th>End Date</th>
                         <th>Budget</th>
-                        <th>Actions</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="trip in trips" :key="trip.id">
                         <td>{{ trip.id }}</td>
                         <td>{{ trip.name }}</td>
+                        <td>{{ trip.destination }}</td>
+                        <td>{{ trip.trip_style }}</td>
                         <td>{{ trip.start_date }}</td>
                         <td>{{ trip.end_date }}</td>
                         <td>${{ parseFloat(trip.budget).toFixed(2) }}</td>
                         <td class="d-flex justify-content-center">
-                            <a href="#" @click.prevent="editTrip(trip)" class="btn btn-warning btn-sm me-2">Edit</a>
-                            <a :href="'/trip/' + trip.id + '/itinerary'" class="btn btn-success btn-sm me-2">Trip
-                                Itinerary</a>
-                            <a href="#" @click.prevent="confirmDelete(trip.id)" class="btn btn-danger btn-sm">Delete</a>
+                            <a href="#" @click.prevent="editTrip(trip)" class="btn btn-warning btn-sm me-2"
+                                title="Edit">
+                                <i class="bi bi-pencil-square me-1"></i>
+                            </a>
+                            <a :href="'/trip/' + trip.id + '/itinerary'" class="btn btn-success btn-sm me-2"
+                                title="View Itinerary">
+                                <i class="bi bi-list-task me-1"></i>Itinerary
+                            </a>
+                            <a href="#" @click.prevent="confirmDelete(trip.id)" class="btn btn-danger btn-sm"
+                                title="Delete">
+                                <i class="bi bi-trash me-1"></i>
+                            </a>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
     </div>
 
     <div v-if="showModal" class="modal fade show" tabindex="-1" style="display: block;" aria-modal="true">
@@ -109,6 +73,27 @@ body {
                         <div class="mb-3">
                             <label for="name" class="form-label">Trip Name</label>
                             <input type="text" id="name" class="form-control" v-model="selectedTrip.name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="destination" class="form-label">Destination</label>
+                            <input type="text" id="destination" class="form-control" v-model="selectedTrip.destination">
+                        </div>
+                        <div class="mb-3">
+                            <label for="style" class="form-label">Trip Style</label>
+                            <select v-model="selectedTrip.trip_style" id="style" name="style" class="form-select" required>
+                                <option value="" disabled selected>Select Trip Type</option>
+                                <option value="Friends">Friends</option>
+                                <option value="Family">Family </option>
+                                <option value="Solo">Solo </option>
+                                <option value="Couple">Couple</option>
+                                <option value="Adventure">Adventure</option>
+                                <option value="Relaxation">Relaxation</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Foodie">Foodie</option>
+                                <option value="Historical">Historical</option>
+                                <option value="Nature">Nature</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="start_date" class="form-label">Start Date</label>
@@ -254,7 +239,7 @@ createApp({
                     console.error('Delete Error:', error);
                 });
         },
-        
+
         fetchTrips() {
             // Implement a method to fetch the latest trips data from the server
             fetch(`/user/trips-data?t=${Date.now()}`) // Append a timestamp

@@ -46,6 +46,11 @@ class Database {
         return $this->conn;
     }
 
+     // Add the prepare method
+     public function prepare($sql) {
+        return $this->conn->prepare($sql);
+    }
+
     // Prevent cloning
     private function __clone() {}
 

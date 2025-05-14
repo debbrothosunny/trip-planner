@@ -11,7 +11,7 @@ class TripExpense {
     private $conn;
     private $db;
     private $table = "trip_expenses";
-
+  
   public function __construct($db) {
         $this->db = $db;
     }

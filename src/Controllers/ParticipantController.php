@@ -4,15 +4,22 @@ use PDO;
 use PDOException;
 use App\Models\TripParticipant; 
 use App\Models\Payment; 
+use App\Models\User;
+use App\Models\Follower;
+use App\Models\Trip; 
+use App\Models\TripInvitation; 
 use App\Models\TripReview; 
-use App\Models\ItineraryEditRequest; 
-use Core\Database;// ✅ Correct the namespace
+use App\Models\PollModel; 
+use Core\Database;
 class ParticipantController {
     private $db;
-
     private $paymentModel;
     private $tripParticipantModel;
-    private $ItineraryEditRequest;
+    private $tripModel;
+    private $userModel;
+    private $invitationModel;
+    private $followerModel;
+    private $pollModel;
     
 
     public function __construct() {
@@ -21,14 +28,115 @@ class ParticipantController {
     
         // Initialize models and pass the database connection
         $this->paymentModel = new Payment($this->db);
+        $this->userModel = new User($this->db);
         $this->tripParticipantModel = new TripParticipant($this->db);
-        $this->ItineraryEditRequest = new ItineraryEditRequest($this->db); // ✅ Add this
-    
+        $this->tripModel = new Trip($this->db); // Initialize Trip model
+        $this->invitationModel = new TripInvitation($this->db); 
+        $this->followerModel = new Follower($this->db);
+        $this->pollModel = new PollModel($this->db);
+        
         session_start(); // Start session
     }
 
 
-    public function dashboard() {
+    public function dashboard()
+    {
+
+
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'participant') {
+            header("Location: /");
+            exit();
+        }
+
+        $userId = $_SESSION['user']['id'];
+
+        // Get all trips for the participant
+        $participantTrips = $this->tripParticipantModel->getAllTripsForParticipant($userId);
+        $acceptedTripIds = array_column(array_filter($participantTrips, function ($trip) {
+            return isset($trip['status']) && $trip['status'] === 'accepted';
+        }), 'trip_id');
+
+        // Get participant details, including profile photo and created_at, from database
+        $stmt = $this->db->prepare("SELECT name, profile_photo, created_at FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $participant = $stmt->fetch(PDO::FETCH_ASSOC);
+        $activeSince = $participant['created_at'] ?? null; // Get the created_at value
+
+        // Calculate ongoing trips and accepted trips
+        $ongoingTrips = [];
+        $acceptedTrips = [];
+        $now = new \DateTime('now', new \DateTimeZone('Asia/Dhaka'));
+
+        foreach ($participantTrips as $trip) {
+            try {
+                $startDate = new \DateTime($trip['start_date'], new \DateTimeZone('Asia/Dhaka'));
+                $endDate = new \DateTime($trip['end_date'], new \DateTimeZone('Asia/Dhaka'));
+
+                if ($now >= $startDate && $now <= $endDate) {
+                    $ongoingTrips[] = $trip;
+                }
+
+                if (isset($trip['status']) && $trip['status'] === 'accepted') {
+                    $acceptedTrips[] = $trip;
+                }
+            } catch (PDOException $e) {
+                error_log("Error parsing date: " . $trip['start_date'] . " or " . $trip['end_date'] . " - " . $e->getMessage());
+            }
+        }
+
+        // Fetch recommendations
+        $lastAcceptedTrips = $this->tripModel->getLastAcceptedTripsForUser($userId, 2);
+        $availableTrips = $this->tripModel->getAllTrips();
+
+        $recommendations = [];
+        foreach ($availableTrips as $availableTrip) {
+            if (in_array($availableTrip['id'], $acceptedTripIds)) {
+                continue;
+            }
+
+            foreach ($lastAcceptedTrips as $acceptedTrip) {
+                if ($availableTrip['trip_style'] == $acceptedTrip['trip_style'] || $availableTrip['destination'] == $acceptedTrip['destination']) {
+                    $recommendations[] = $availableTrip;
+                    break;
+                }
+            }
+        }
+
+        // 🔥🔥 **Mute check added here**  
+       // MUTE logic - handle mute request BEFORE everything else
+        if (isset($_GET['mute_recommendation'])) {
+            $mutedId = (int) $_GET['mute_recommendation'];
+            if (!isset($_SESSION['muted_recommendation_ids'])) {
+                $_SESSION['muted_recommendation_ids'] = [];
+            }
+            if (!in_array($mutedId, $_SESSION['muted_recommendation_ids'])) {
+                $_SESSION['muted_recommendation_ids'][] = $mutedId;
+            }
+            header("Location: /participant/dashboard");
+            exit();
+        }
+
+        $data = [
+            'ongoingTrips' => $ongoingTrips,
+            'acceptedTrips' => $acceptedTrips,
+            'participant' => $participant,
+            'recommendations' => $recommendations,
+            'activeSince' => $activeSince,
+        ];
+
+        $dashboardViewPath = __DIR__ . '/../../resources/views/participant/dashboard.php';
+        if (file_exists($dashboardViewPath)) {
+            extract($data);
+            include $dashboardViewPath;
+        } else {
+            echo "Participant dashboard view not found!";
+        }
+    }
+
+
+    
+    public function Trips()
+    {
         // Check if the user is logged in and is a participant
         if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'participant') {
             header("Location: /"); // Or redirect to a relevant page
@@ -38,46 +146,80 @@ class ParticipantController {
         $userId = $_SESSION['user_id'];
     
         // Create an instance of the Database class and get the connection
-        $database = Database::getInstance(); 
+        $database = Database::getInstance();
         $db = $database->getConnection(); // Get the database connection
     
-        // Create instances of the models, passing the database connection
-        $tripParticipantModel = new TripParticipant($db); 
-        $paymentModel = new Payment($db); 
+        // Create instances of the required models
+        $tripParticipantModel = new TripParticipant($db);
+        $paymentModel = new Payment($db);
+        $tripModel = new Trip($db);
     
-        // Get all trips for the participant
-        $trips = $tripParticipantModel->getAllTripsForParticipant($userId);
+        // Retrieve the trip_style filter from the GET parameters
+        $tripStyleFilter = $_GET['trip_style'] ?? null;
+        $minBudgetFilter = $_GET['min_budget'] ?? null;
+        $maxBudgetFilter = $_GET['max_budget'] ?? null;
     
-        // Check for upcoming trips within the next 7 days
+        // Pagination settings
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $itemsPerPage = 20;
+        $offset = ($page - 1) * $itemsPerPage;
+    
+        // Get total count for pagination, applying the trip_style filter
+        $totalTrips = $tripParticipantModel->getTotalTripsForParticipant($userId, $tripStyleFilter, $minBudgetFilter, $maxBudgetFilter);
+        $totalPages = ceil($totalTrips / $itemsPerPage);
+    
+        // Get paginated trips for the participant, applying the trip_style filter
+        $trips = $tripParticipantModel->getPaginatedTripsForParticipant($userId, $itemsPerPage, $offset, $tripStyleFilter, $minBudgetFilter, $maxBudgetFilter);
+    
+        // Fetch unique trip styles from the database
+        $uniqueTripStyles = $tripModel->getUniqueTripStyles();
+    
+        // Array to store payment statuses for each trip
+        $paymentStatuses = [];
+    
+        // Check for upcoming trips within the next 7 days and fetch payment status and participant count
         $upcomingTrips = [];
         $today = new \DateTime();
-        $interval = new \DateInterval('P7D'); // 7 days
+        $interval = new \DateInterval('P7D');
     
-        foreach ($trips as $trip) {
+        foreach ($trips as &$trip) {
             $startDate = new \DateTime($trip['start_date']);
             if ($today->diff($startDate)->days <= 7 && $today <= $startDate) {
-                $upcomingTrips[] = $trip; // Add to upcoming trips array
+                $upcomingTrips[] = &$trip;
             }
-        }
     
-        // Initialize an array to hold all payments
-        $payments = [];
+            // Fetch the payment status for the current trip and user
+            $paymentStatus = $paymentModel->getPaymentStatus($userId, $trip['trip_id']);
+            $paymentStatuses[$trip['trip_id']] = $paymentStatus;
     
-        // Get payments for each trip the participant is part of
-        foreach ($trips as $trip) {
-            $tripPayments = $paymentModel->getPaymentsByUser($userId, $trip['trip_id']); // Changed 'id' to 'trip_id'
-            $payments = array_merge($payments, $tripPayments); // Merge all payments
+            // Get creator details including profile photo
+            $tripDetails = $tripModel->getTripCreator($trip['trip_id']); // Use the getTripCreator method
+            $trip['creator_name'] = $tripDetails['creator_name'];
+            $trip['creator_email'] = $tripDetails['creator_email'];
+            $trip['country'] = $tripDetails['country'];
+            $trip['city'] = $tripDetails['city'];
+            $trip['creator_id'] = $tripDetails['creator_id'];
+            $trip['creator_profile_photo'] = $tripDetails['profile_photo'] ?? 'default_profile.png'; // Get profile photo
+    
+            // Fetch and add the total accepted participants count to the trip array
+            $acceptedCount = $tripParticipantModel->getTotalAcceptedParticipants($trip['trip_id']);
+            $trip['accepted_participants'] = $acceptedCount;
         }
+        unset($trip);
     
         // Prepare the data to pass to the view
         $data = [
             'trips' => $trips,
             'upcomingTrips' => $upcomingTrips,
-            'payments' => $payments // Add the payments data
+            'totalPages' => $totalPages,
+            'currentPage' => $page,
+            'payment_status' => $paymentStatuses,
+            'tripStyleFilter' => $tripStyleFilter,
+            'uniqueTripStyles' => $uniqueTripStyles,
         ];
     
         // Load the participant dashboard view
-        $viewPath = __DIR__ . '/../../resources/views/participant/dashboard.php';
+        $viewPath = __DIR__ . '/../../resources/views/participant/trips.php';
         if (file_exists($viewPath)) {
             // Extract variables for use in the view
             extract($data);
@@ -87,22 +229,17 @@ class ParticipantController {
         }
     }
     
-    
-    
-    
-    
-    
-    
+
     
 
-// 📌 Update Status - Accept or Decline a Trip
+    // 📌 Update Status - Accept or Decline a Trip
     public function updateStatus()
     {
         session_start();
 
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['message'] = "User not logged in.";
-            header("Location: /login");
+            header("Location: /");
             exit();
         }
 
@@ -122,35 +259,37 @@ class ParticipantController {
 
                 if (!$trip) {
                     $_SESSION['message'] = "Trip not found.";
-                    header("Location: /participant/dashboard");
+                    header("Location: /participant/trips");
                     exit();
                 }
 
                 $newTripStartDate = $trip['start_date'];
                 $newTripEndDate = $trip['end_date'];
 
-                // Check if the user has any accepted trips with overlapping dates
-                $overlappingTripStmt = $db->prepare(
-                    "SELECT * FROM trip_participants 
-                    JOIN trips ON trip_participants.trip_id = trips.id
-                    WHERE trip_participants.user_id = :user_id 
-                    AND trip_participants.status = 'accepted' 
-                    AND (
-                        (trips.start_date BETWEEN :start_date AND :end_date) 
-                        OR (trips.end_date BETWEEN :start_date AND :end_date) 
-                        OR (trips.start_date <= :start_date AND trips.end_date >= :end_date)
-                    )"
-                );
-                $overlappingTripStmt->execute([
-                    ':user_id' => $userId,
-                    ':start_date' => $newTripStartDate,
-                    ':end_date' => $newTripEndDate
-                ]);
+                if ($status === 'accepted') {
+                    // Check if the user has any accepted trips with overlapping dates
+                    $overlappingTripStmt = $db->prepare(
+                        "SELECT * FROM trip_participants
+                        JOIN trips ON trip_participants.trip_id = trips.id
+                        WHERE trip_participants.user_id = :user_id
+                        AND trip_participants.status = 'accepted'
+                        AND (
+                            (trips.start_date BETWEEN :start_date AND :end_date)
+                            OR (trips.end_date BETWEEN :start_date AND :end_date)
+                            OR (trips.start_date <= :start_date AND trips.end_date >= :end_date)
+                        )"
+                    );
+                    $overlappingTripStmt->execute([
+                        ':user_id' => $userId,
+                        ':start_date' => $newTripStartDate,
+                        ':end_date' => $newTripEndDate
+                    ]);
 
-                if ($overlappingTripStmt->rowCount() > 0) {
-                    $_SESSION['message'] = "You already have an accepted trip during this time period.";
-                    header("Location: /participant/dashboard");
-                    exit();
+                    if ($overlappingTripStmt->rowCount() > 0) {
+                        $_SESSION['message'] = "You already have an accepted trip during this time period.";
+                        header("Location: /participant/trips");
+                        exit();
+                    }
                 }
 
                 // Ensure participant exists before updating or inserting
@@ -162,23 +301,21 @@ class ParticipantController {
 
                 if ($checkStmt->rowCount() == 0) {
                     // Insert participant if not already in the table
-                    $insertStmt = $db->prepare("INSERT INTO trip_participants (trip_id, user_id, status, responded_at, updated_at) 
-                                                VALUES (:trip_id, :user_id, :status, :responded_at, :updated_at)");
+                    $insertStmt = $db->prepare("INSERT INTO trip_participants (trip_id, user_id, status, updated_at)
+                                                VALUES (:trip_id, :user_id, :status, :updated_at)");
                     $insertStmt->execute([
                         ':trip_id' => $tripId,
                         ':user_id' => $userId,
                         ':status' => $status,
-                        ':responded_at' => $timestamp,
                         ':updated_at' => $timestamp
                     ]);
                 } else {
                     // Update the existing participant status
-                    $updateStmt = $db->prepare("UPDATE trip_participants 
-                                            SET status = :status, responded_at = :responded_at, updated_at = :updated_at
-                                            WHERE user_id = :user_id AND trip_id = :trip_id");
+                    $updateStmt = $db->prepare("UPDATE trip_participants
+                                                SET status = :status, updated_at = :updated_at
+                                                WHERE user_id = :user_id AND trip_id = :trip_id");
                     $updateStmt->execute([
                         ':status' => $status,
-                        ':responded_at' => $timestamp,
                         ':updated_at' => $timestamp,
                         ':user_id' => $userId,
                         ':trip_id' => $tripId
@@ -186,32 +323,158 @@ class ParticipantController {
                 }
 
                 $_SESSION['message'] = "Status updated successfully!";
-                header("Location: /participant/dashboard");
+                header("Location: /participant/trips");
                 exit();
+
             } catch (PDOException $e) {
                 $_SESSION['message'] = "Database Error: " . $e->getMessage();
-                header("Location: /participant/dashboard");
+                header("Location: /participant/trips");
                 exit();
             }
         }
 
         $_SESSION['message'] = "Invalid request.";
-        header("Location: /participant/dashboard");
+        header("Location: /participant/trips");
         exit();
     }
     
-    
-    
-    
+
+   // Cancel Trip
+   public function cancelTrip()
+   {
+       // Ensure the user is logged in and has the participant role
+       if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'participant') {
+           header('Location: /login'); // Adjust the path
+           exit();
+       }
+
+       if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trip_id'])) {
+           $tripId = filter_input(INPUT_POST, 'trip_id', FILTER_SANITIZE_NUMBER_INT);
+           $userId = $_SESSION['user_id'];
+
+           if (!$tripId) {
+               $this->sendJsonResponse(['success' => false, 'message' => 'Invalid Trip ID.']);
+               return;
+           }
+
+           // Check if the user is an accepted participant in this trip
+           $participation = $this->tripParticipantModel->getParticipation($userId, $tripId);
+
+           if (!$participation || $participation['status'] !== 'accepted') {
+               $this->sendJsonResponse(['success' => false, 'message' => 'You are not an accepted participant in this trip.']);
+               return;
+           }
+
+           // Check if the trip exists and its start date has not passed
+           $trip = $this->tripModel->find($tripId);
+           if (!$trip) {
+               $this->sendJsonResponse(['success' => false, 'message' => 'Trip not found.']);
+               return;
+           }
+
+           if (new \DateTime($trip['start_date']) <= new \DateTime()) {
+               $this->sendJsonResponse(['success' => false, 'message' => 'Cannot cancel as the trip has already started.']);
+               return;
+           }
+
+           // Get the latest payment status for the user and trip
+           $paymentStatus = $this->paymentModel->getPaymentStatus($userId, $tripId);
+
+           // Update trip_participants status to 'pending' upon cancellation
+           $updatedParticipant = $this->tripParticipantModel->updateParticipationStatus($userId, $tripId, 'pending');
+
+           if ($updatedParticipant) {
+               if ($paymentStatus === 'completed') {
+                   // Calculate refund amount (10% cut from the total budget)
+                   $refundPercentage = 0.10;
+                   $totalBudget = $trip['budget'];
+                   $refundAmount = $totalBudget - ($totalBudget * $refundPercentage);
+
+                   // Update payment status to 'cancelled'
+                   $updatedPayment = $this->paymentModel->updatePaymentStatus($userId, $tripId, 'cancelled');
+
+                   if ($updatedPayment) {
+                       $this->sendJsonResponse(['success' => true, 'message' => "Trip cancellation requested successfully. You will be refunded $" . number_format($refundAmount, 2) . " (10% deduction from the budget)."]);
+                   } else {
+                       $this->sendJsonResponse(['success' => false, 'message' => 'Trip cancellation successful, but failed to update payment status. Please contact support.']);
+                   }
+               } else {
+                   $this->sendJsonResponse(['success' => true, 'message' => 'Trip cancellation requested successfully. No refund applicable as payment was not completed.']);
+               }
+           } else {
+               $this->sendJsonResponse(['success' => false, 'message' => 'Failed to request trip cancellation. Please try again.']);
+           }
+       } else {
+           // Invalid request
+           header('HTTP/1.1 400 Bad Request');
+           $this->sendJsonResponse(['success' => false, 'message' => 'Invalid request.']);
+       }
+   }
+
+    // Helper function to send JSON response
+    private function sendJsonResponse(array $data)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    }
+
+
     
 
+
+
+    public function archivedTrips() {
+        // Check if the user is logged in and is a participant
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'participant') {
+            header("Location: /"); // Or redirect to a relevant page
+            exit();
+        }
+
+        $userId = $_SESSION['user_id'];
+
+        // Pagination settings for archived trips
+        $page = isset($_GET['archive_page']) ? (int)$_GET['archive_page'] : 1; // Default to page 1
+        $itemsPerPage = 10; // Adjust as needed
+        $offset = ($page - 1) * $itemsPerPage;
+
+        // Get total count for archived trips
+        $totalArchivedTrips = $this->tripParticipantModel->getTotalArchivedTripsForParticipant($userId);
+        $totalPagesArchived = ceil($totalArchivedTrips / $itemsPerPage);
+
+        // ✅ Fetch the paginated archived trips
+        $archivedTrips = $this->tripParticipantModel->getUserArchivedTrips($userId, $itemsPerPage, $offset);
+
+        // Prepare the data to pass to the view
+        $data = [
+            'archivedTrips' => $archivedTrips, // ✅ Pass the archived trips data
+            'totalPagesArchived' => $totalPagesArchived,
+            'currentArchivePage' => $page,
+        ];
+
+        // Load the archived trips view
+        $viewPath = __DIR__ . '/../../resources/views/participant/archived_trips.php';
+        if (file_exists($viewPath)) {
+            // Extract variables for use in the view
+            extract($data);
+            include $viewPath;
+        } else {
+            echo "Participant archived trips view not found!";
+        }
+    }
+   
+    
+    
+    
     public function viewTripDetails($tripId) {
         // Fetch trip details from the database using the TripParticipant model
         $tripDetailsModel = new TripParticipant($this->db);
-        
+        $tripReviewModel = new TripReview($this->db);
+        $pollModel = new PollModel($this->db); // Instantiate the PollModel
+
         // Fetch all trip-related details using a single method
         $tripDetails = $tripDetailsModel->getTripDetails($tripId);
-        
+        $polls = $this->pollModel->getPollsByTripId($tripId);
+
         // Check if trip details were fetched successfully
         if (!empty($tripDetails)) {
             // Extract details from the returned array
@@ -219,21 +482,23 @@ class ParticipantController {
             $accommodations = $tripDetails['accommodations'] ?? [];
             $transportation = $tripDetails['transportation'] ?? [];
             $expenses = $tripDetails['expenses'] ?? [];
-            
+
             // Fetch the participant details (status) for this trip
             $participantDetails = $tripDetailsModel->getParticipantByTripId($tripId, $_SESSION['user_id']);
             $participantStatus = $participantDetails['status'] ?? 'pending'; // Default to 'pending' if no status is found
-    
+
             // Fetch the reviews for the trip from the TripReview model
-            $tripReviewModel = new TripReview($this->db);
             $reviews = $tripReviewModel->getReviewsByTrip($tripId, $_SESSION['user_id']); // Pass user_id to avoid their own review
-    
-            // Include the trip_id for the status update form
+
+            // Fetch polls for this trip
+            $polls = $pollModel->getPollsByTripId($tripId); // You'll need to create this method in PollModel
+
+            // Include the trip_id for the status update form and poll creation form
             $tripDetails['trip_id'] = $tripId;
-    
-            // Pass the data to the view
-            $viewData = compact('itinerary', 'accommodations', 'transportation', 'expenses', 'tripDetails', 'participantStatus', 'reviews');
-            
+
+            // Pass all data to the view
+            $viewData = compact('itinerary', 'accommodations', 'transportation', 'expenses', 'tripDetails', 'participantStatus', 'reviews', 'polls'); // Removed 'editRequests', added 'polls'
+
             // Render the view
             $viewPath = __DIR__ . '/../../resources/views/participant/trip_details.php';
             if (file_exists($viewPath)) {
@@ -247,31 +512,35 @@ class ParticipantController {
         }
     }
     
+
     
+    
+
+
 
 
 
 
     public function submitReview($tripId) {
         // Check if the participant has accepted the trip (status = 'accepted')
-        $tripParticipantModel = new TripParticipant();
+        $tripParticipantModel = new TripParticipant($this->db); // Pass the database connection
         $participant = $tripParticipantModel->getParticipantByTripId($tripId, $_SESSION['user_id']);
-    
+
         // Ensure the participant data is valid and status is 'accepted'
         if (!$participant || !isset($participant['status']) || $participant['status'] !== 'accepted') {
             echo "You cannot review this trip until you accept it!";
             return;
         }
-    
+
         // Collect rating and review from the POST request
         $rating = $_POST['rating'] ?? null;
         $reviewText = $_POST['review_text'] ?? null;
-    
+
         // Ensure rating and review text are provided
         if ($rating && $reviewText) {
             // Save the review
-            $tripReviewModel = new TripReview($this->db); // You need to pass $this->db to TripReview
-            $userId = $_SESSION['user_id'];  // Assuming user_id is stored in the session
+            $tripReviewModel = new TripReview($this->db); // Ensure $this->db is available
+            $userId = $_SESSION['user_id'];   // Assuming user_id is stored in the session
             $tripReviewModel->saveReview($tripId, $userId, $rating, $reviewText);
             echo "Thank you for your feedback!";
         } else {
@@ -281,275 +550,285 @@ class ParticipantController {
 
 
 
- // ✅ Show trip participant profile
- public function showProfile() {
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: /login");
-        exit();
-    }
 
-    $user_id = $_SESSION['user_id'];
-
-    try {
-        $query = "
-            SELECT u.id, u.name, u.email, tp.trip_id, tp.status
-            FROM users u 
-            JOIN trip_participants tp ON u.id = tp.user_id 
-            WHERE u.id = :user_id
-        ";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $participant = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$participant) {
-            $_SESSION['error'] = "Trip Participant not found!";
-            header("Location: /dashboard");
+    // ✅ Show trip participant profile
+    public function showProfile() {
+        
+        
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: /");
             exit();
         }
-
-        require __DIR__ . '/../../resources/views/participant/profile.php';
-
-    } catch (PDOException $e) {
-        die("Database error: " . $e->getMessage());
+    
+        $user_id = $_SESSION['user_id'];
+    
+        // Fetch user details from the database
+        $user = $this->userModel->getUser($user_id);
+    
+        if (!$user) {
+            $_SESSION['error'] = "User not found!";
+            header("Location: /dashboard.php");
+            exit();
+        }
+    
+        // ✅ Define the profile view path
+        $profileViewPath = __DIR__ . '/../../resources/views/participant/profile.php';
+    
+        // ✅ Check if view file exists before including
+        if (file_exists($profileViewPath)) {
+            include $profileViewPath;
+        } else {
+            echo "User profile view not found!";
+        }
     }
-}
 
-// ✅ Update trip participant profile (Only Name, Email, Password)
-    public function updateProfile() {
+
+    public function updateProfile()
+    {
+        session_start();
+
+        // Check if user is logged in
         if (!isset($_SESSION['user_id'])) {
-            header("Location: /login");
+            header("Location: /");
             exit();
         }
 
         $user_id = $_SESSION['user_id'];
         $name = $_POST['name'] ?? null;
         $email = $_POST['email'] ?? null;
-        $password = !empty($_POST['password']) ? password_hash($_POST['password'], PASSWORD_BCRYPT) : null;
+        $password = !empty($_POST['password']) ? $_POST['password'] : null;
+        $phone = $_POST['phone'] ?? null;
+        $country = $_POST['country'] ?? null;
+        $language = $_POST['language'] ?? null;
+        $currency = $_POST['currency'] ?? null;
+        $gender = $_POST['gender'] ?? null;
 
-        try {
-            // Ensure the user is a trip participant
-            $stmt = $this->db->prepare("SELECT * FROM trip_participants WHERE user_id = :user_id");
-            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-            $stmt->execute();
+        // Check if any changes were actually made
+        $existingUser = $this->userModel->getUser($user_id);
+        if ($existingUser) {
+            $hasChanges = false;
+            if ($name !== $existingUser['name']) $hasChanges = true;
+            if ($email !== $existingUser['email']) $hasChanges = true;
+            if ($phone !== $existingUser['phone']) $hasChanges = true;
+            if ($country !== $existingUser['country']) $hasChanges = true;
+            if ($language !== $existingUser['language']) $hasChanges = true;
+            if ($currency !== $existingUser['currency']) $hasChanges = true;
+            if ($gender !== $existingUser['gender']) $hasChanges = true;
+            if (!empty($_FILES['profile_photo']['name'])) $hasChanges = true;
+            if ($password !== null) $hasChanges = true;
 
-            if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
-                $_SESSION['error'] = "Unauthorized access!";
-                header("Location: /dashboard");
+            if (!$hasChanges) {
+                echo json_encode(['success' => false, 'message' => 'No changes were made.']);
                 exit();
             }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'User not found.']);
+            exit();
+        }
 
-            // ✅ Update user details (only name, email, password if provided)
-            if ($password) {
-                $query = "UPDATE users SET name = :name, email = :email, password = :password WHERE id = :user_id";
-                $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':password', $password, PDO::PARAM_STR);
+        // Handle profile photo upload
+        $profilePhotoPath = $existingUser['profile_photo'] ?? null; // Keep existing if no new upload
+        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+            $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (in_array($_FILES['profile_photo']['type'], $allowedMimeTypes)) {
+                $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/image/profile_photos/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $uniqueFilename = uniqid() . '_' . basename($_FILES['profile_photo']['name']);
+                $newProfilePhotoPath = 'image/profile_photos/' . $uniqueFilename;
+                if (!move_uploaded_file($_FILES['profile_photo']['tmp_name'], $uploadDir . $uniqueFilename)) {
+                    echo json_encode(['success' => false, 'message' => 'Error uploading profile photo.']);
+                    exit();
+                }
+                if ($_FILES['profile_photo']['size'] > 2 * 1024 * 1024) {
+                    echo json_encode(['success' => false, 'message' => 'Profile photo size exceeds the limit (2MB).']);
+                    exit();
+                }
+                // Delete the old profile photo if a new one is uploaded
+                if ($profilePhotoPath && file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $profilePhotoPath)) {
+                    unlink($_SERVER['DOCUMENT_ROOT'] . '/' . $profilePhotoPath);
+                }
+                $profilePhotoPath = $newProfilePhotoPath;
             } else {
-                $query = "UPDATE users SET name = :name, email = :email WHERE id = :user_id";
-                $stmt = $this->db->prepare($query);
-            }
-
-            $stmt->bindParam(':name', $name, PDO::PARAM_STR);
-            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $_SESSION['success'] = "Profile updated successfully!";
-            header("Location: /participant/profile");
-            exit();
-        } catch (PDOException $e) {
-            $_SESSION['error'] = "Error updating profile!";
-            header("Location: /participant/profile");
-            exit();
-        }
-    }
-
-
-    // Trip participant Payment
-    public function makePayment() {
-        if (!isset($_SESSION['user_id'])) {
-            $_SESSION['message'] = "User not logged in.";
-            header("Location: /login");
-            exit();
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trip_id'], $_POST['amount'], $_POST['payment_method'], $_POST['transaction_id'])) {
-            $userId = $_SESSION['user_id'];
-            $tripId = $_POST['trip_id'];
-            $amount = $_POST['amount'];
-            $paymentMethod = $_POST['payment_method'];
-            $transactionId = $_POST['transaction_id'];  // New transaction ID
-            $timestamp = date('Y-m-d H:i:s');
-
-            try {
-                $db = Database::getInstance()->getConnection();
-
-                // Check if the user is part of the trip
-                $tripParticipantStmt = $db->prepare("SELECT * FROM trip_participants WHERE user_id = :user_id AND trip_id = :trip_id AND status = 'accepted'");
-                $tripParticipantStmt->execute([':user_id' => $userId, ':trip_id' => $tripId]);
-
-                if ($tripParticipantStmt->rowCount() == 0) {
-                    $_SESSION['message'] = "You are not registered for this trip.";
-                    header("Location: /participant/dashboard");
-                    exit();
-                }
-
-                // Check if a pending payment exists
-                $paymentCheckStmt = $db->prepare("SELECT * FROM payments WHERE user_id = :user_id AND trip_id = :trip_id AND payment_status = 'pending'");
-                $paymentCheckStmt->execute([':user_id' => $userId, ':trip_id' => $tripId]);
-
-                if ($paymentCheckStmt->rowCount() > 0) {
-                    $_SESSION['message'] = "You already have a pending payment for this trip.";
-                    header("Location: /participant/dashboard");
-                    exit();
-                }
-
-                // Insert payment record with transaction_id
-                $insertPaymentStmt = $db->prepare("INSERT INTO payments (trip_id, user_id, amount, payment_method, payment_status, created_at, transaction_id) 
-                VALUES (:trip_id, :user_id, :amount, :payment_method, 'pending', :created_at, :transaction_id)");
-                $insertPaymentStmt->execute([
-                    ':trip_id' => $tripId,
-                    ':user_id' => $userId,
-                    ':amount' => $amount,
-                    ':payment_method' => $paymentMethod,
-                    ':created_at' => $timestamp,
-                    ':transaction_id' => $transactionId // Insert transaction_id
-                ]);
-
-                $_SESSION['message'] = "Payment initiated successfully!";
-                header("Location: /participant/dashboard");
-                exit();
-            } catch (PDOException $e) {
-                $_SESSION['message'] = "Database Error: " . $e->getMessage();
-                header("Location: /participant/dashboard");
+                echo json_encode(['success' => false, 'message' => 'Invalid profile photo format. Only JPEG, PNG, and GIF are allowed.']);
                 exit();
             }
         }
 
-        $_SESSION['message'] = "Invalid request.";
-        header("Location: /participant/dashboard");
+        // Update user profile
+        if ($this->userModel->updateProfile(
+            $user_id,
+            $name,
+            $email,
+            $password,
+            $phone,
+            $profilePhotoPath,
+            $country,
+            $language,
+            $currency,
+            $gender
+        )) {
+            echo json_encode(['success' => true, 'message' => 'Profile updated successfully!']);
+            // Optionally, update session user data if needed
+            $updatedUser = $this->userModel->getUser($user_id);
+            if ($updatedUser) {
+                $_SESSION['user'] = $updatedUser; // Assuming you store user data in $_SESSION['user']
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to update profile!']);
+        }
         exit();
     }
 
-
-
-
-
-
-
-    public function requestEdit($tripId, $itineraryId) {
-        ini_set('display_errors', 1);
-        ini_set('display_startup_errors', 1);
-        error_reporting(E_ALL);
     
-        echo "Controller reached!<br>";
+
+
+
+
+  
+
+
+
+
+
+    public function generateInviteLink() {
+        // 1. Get the trip ID from the form submission ($_POST)
+        $tripId = $_POST['trip_id'] ?? null;
     
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            echo "Request method is POST.<br>";
+        // 2. Get the ID of the logged-in user (the inviter) from the session
+
+        $inviterUserId = $_SESSION['user_id'] ?? null;
     
-            var_dump($_SESSION['user_id'] ?? null); echo "<br>";
-            $userId = $_SESSION['user_id'] ?? null;
-            var_dump($_POST['edit_reason'] ?? ''); echo "<br>";
-            $notes = $_POST['edit_reason'] ?? '';
+        if (!$inviterUserId) {
+            // Handle cases where the user is not logged in
+            header("Location: /login.php?error=not_logged_in"); // Redirect to login page with an error
+            exit();
+        }
     
-            if (!$userId) {
-                die("🚨 Error: User not logged in.");
+        if (!$tripId) {
+            // Handle cases where trip ID is missing
+            header("Location: /trips.php?error=missing_trip_id"); // Redirect back to trips page with an error
+            exit();
+        }
+    
+        // 3. Generate a unique invitation code
+        $uniqueCode = uniqid('INV_', true);
+    
+        // 4. Store the invitation record in the database using the model
+        $created_at = date('Y-m-d H:i:s');
+        $expires_at = null; // You can set an expiration date here if needed
+        $status = 'pending';
+        $invited_user_id = null;
+    
+        $invitationData = [
+            'trip_id' => $tripId,
+            'inviter_user_id' => $inviterUserId,
+            'invitation_code' => $uniqueCode,
+            'created_at' => $created_at,
+            'expires_at' => $expires_at,
+            'status' => $status,
+            'invited_user_id' => $invited_user_id,
+        ];
+    
+        $invitationId = $this->invitationModel->create($invitationData);
+    
+        if ($invitationId) {
+            // 5. Generate the shareable invitation link
+            $invitationLink = '/invite/' . $uniqueCode; // Assuming you'll create a route/page for this
+    
+            // 6. Include the view to display the link
+            $inviteLinkViewPath = __DIR__ . '/../../resources/views/participant/generate_invite_link.php';
+            if (file_exists($inviteLinkViewPath)) {
+                include $inviteLinkViewPath;
+                exit();
+            } else {
+                echo "Error: Invite link view not found!";
+                exit();
             }
-    
-            if (empty($notes)) {
-                die("⚠️ Please provide a reason for your edit request.");
-            }
-    
-            $success = false; // Initialize $success
-    
-            try {
-                $stmt = $this->db->prepare("
-                    INSERT INTO itinerary_edit_requests (trip_id, itinerary_id, user_id, notes, status)
-                    VALUES (?, ?, ?, ?, 'pending')
-                ");
-    
-                $success = $stmt->execute([$tripId, $itineraryId, $userId, $notes]);
-                var_dump($success); echo "<br>"; // Check if execute was successful
-    
-                if ($success) {
-                    echo "✅ Request stored successfully!<br>";
-                    // header("Location: /participant/trip/" . $tripId);
-                    exit;
-                } else {
-                    echo "❌ Database error!<br>";
-                }
-            } catch (PDOException $e) {
-                echo "❌ SQL Error: " . $e->getMessage() . "<br>";
-            }
-            exit;
         } else {
-            echo "Request method is not POST.<br>";
+            // Handle cases where saving the invitation failed
+            header("Location: /trip_details.php?id=" . $tripId . "&error=invite_failed"); // Redirect back to trip details with an error
+            exit();
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-     
 
-    // 📌 Trip owner views all pending edit requests
-    public function viewEditRequests($tripId) {
-        $userId = $_SESSION['user_id']; // Get logged-in user ID
+    public function handleInviteLink($code)
+    {
+        // $code contains the unique invitation code from the URL
+        $invitation = $this->invitationModel->findByCode($code); // Implement findByCode in your TripInvitation model
 
-        // Ensure the user is the trip owner
-        $stmt = $this->db->prepare("SELECT * FROM trips WHERE id = ? AND owner_id = ?");
-        $stmt->execute([$tripId, $userId]);
-        $trip = $stmt->fetch();
+        if ($invitation && $invitation['status'] === 'pending') {
+            // Invitation is valid and pending
+            $trip = $this->tripModel->find($invitation['trip_id']); // Implement find in your Trip model
 
-        if (!$trip) {
-            echo json_encode(['status' => 'error', 'message' => 'You are not the trip owner.']);
+            if ($trip) {
+                // Trip found, display information and a way to join
+                include 'resources/views/participant/trip_details.php'; // Create this view
+                exit();
+            } else {
+                echo "<h2>Error: Trip associated with this invitation not found.</h2>";
+            }
+        } else {
+            echo "<h2>Invalid or expired invitation link.</h2>";
+        }
+    }
+
+
+
+    public function userProfileDetails(int $userId)
+    {
+        // Fetch the profile user's details
+        $profileUser = $this->userModel->find($userId);
+
+        if (!$profileUser) {
+            http_response_code(404);
+            echo "User not found.";
             return;
         }
 
-        // Fetch all pending edit requests
-        $stmt = $this->db->prepare("
-            SELECT ier.id, ier.user_id, u.name, ier.status, i.day_title 
-            FROM itinerary_edit_requests ier
-            JOIN users u ON ier.user_id = u.id
-            JOIN trip_itineraries i ON ier.itinerary_id = i.id
-            WHERE ier.trip_id = ? AND ier.status = 'pending'
-        ");
-        $stmt->execute([$tripId]);
-        $requests = $stmt->fetchAll();
-
-        include __DIR__ . '/../../resources/views/trip_owner/edit_requests.php';
-    }
-
-    // 📌 Trip owner approves/rejects edit requests
-    public function updateEditRequest($tripId, $requestId) {
-        $userId = $_SESSION['user_id']; // Get logged-in user ID
-
-        // Ensure the user is the trip owner
-        $stmt = $this->db->prepare("SELECT * FROM trips WHERE id = ? AND owner_id = ?");
-        $stmt->execute([$tripId, $userId]);
-        $trip = $stmt->fetch();
-
-        if (!$trip) {
-            echo json_encode(['status' => 'error', 'message' => 'You are not the trip owner.']);
-            return;
+        $currentUserId = $this->getCurrentUserId();
+        $isFollowing = false;
+        if ($currentUserId && $currentUserId !== $userId) {
+            $isFollowing = $this->followerModel->isFollowing($currentUserId, $userId);
         }
 
-        // Get approval status from form
-        $status = $_POST['status']; // 'approved' or 'rejected'
+        // Fetch the profile user's expired public trips
+        $expiredTrips = $this->tripModel->getUserExpiredPublicTrips($userId);
+        
+        $lastTripItineraries = [];
+        $lastTrip = null; // Initialize $lastTrip
+        if (!empty($expiredTrips)) {
+            // Get the last expired trip (assuming they are ordered by end_date DESC)
+            $lastTrip = reset($expiredTrips);
+            $lastTripItineraries = $this->tripModel->getTripItineraries($lastTrip['id']);
+        }
 
-        // Update request status in DB
-        $stmt = $this->db->prepare("UPDATE itinerary_edit_requests SET status = ? WHERE id = ?");
-        $stmt->execute([$status, $requestId]);
+        $data = [
+            'profileUser' => $profileUser,
+            'previousTrips' => $expiredTrips,
+            'isFollowing' => $isFollowing,
+            'lastTripItineraries' => $lastTripItineraries,
+            'lastTrip' => $lastTrip, // Pass $lastTrip to the view
+        ];
 
-        echo json_encode(['status' => 'success', 'message' => 'Edit request updated successfully.']);
+        $viewPath = __DIR__ . '/../../resources/views/participant/user_profile_details.php';
+        if (file_exists($viewPath)) {
+            extract($data);
+            include $viewPath;
+        } else {
+            echo "User profile details view not found!";
+        }
     }
 
+    private function getCurrentUserId(): ?int
+    {
+        // Example using a session:
+       
+        return $_SESSION['user_id'] ?? null;
+
+        // Replace the above with your actual authentication logic.
+    }
       
-    
 }
+    

@@ -6,51 +6,7 @@ $transportations_json = json_encode($transportations);
 
 ?>
 
-<style>
-.table th,
-.table td {
-    vertical-align: middle;
-    text-align: center;
-}
 
-.btn-custom {
-    font-size: 14px;
-    padding: 5px 10px;
-}
-
-.sidebar {
-    width: 250px;
-    background: #2c3e50;
-    color: white;
-    height: 100vh;
-    position: fixed;
-    padding-top: 20px;
-}
-
-.sidebar a {
-    color: white;
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    text-decoration: none;
-    transition: 0.3s;
-}
-
-.sidebar a i {
-    margin-right: 10px;
-}
-
-.sidebar a:hover,
-.sidebar a.active {
-    background: #34495e;
-}
-
-.content {
-    margin-left: 270px;
-    padding: 20px;
-    width: 100%;
-}
-</style>
 
 <div id="app" class="container">
     <h3 class="mb-3 text-center">Transportation List</h3>
@@ -93,10 +49,14 @@ $transportations_json = json_encode($transportations);
                     <td>{{ formatCurrency(transportation.amount) }} USD</td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
-                            <button @click="editTransportation(transportation)"
-                                class="btn btn-warning btn-sm">Edit</button>
-                            <button @click="confirmDelete(transportation.id)"
-                                class="btn btn-danger btn-sm">Delete</button>
+                            <button @click="editTransportation(transportation)" class="btn btn-warning btn-sm"
+                                title="Edit">
+                                <i class="bi bi-pencil-square me-1"></i>
+                            </button>
+                            <button @click="confirmDelete(transportation.id)" class="btn btn-danger btn-sm"
+                                title="Delete">
+                                <i class="bi bi-trash me-1"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
