@@ -1,4 +1,4 @@
-In my project, I am using PHP for the backend and HTML, CSS, and Bootstrap 5 for the frontend because I am not familiar with Vue.js. This is my first project using core PHP, and given the 14-day timeframe, I don't have enough time to learn Vue.js and implement it. Therefore, I have chosen to use HTML, CSS, and Bootstrap 5 for the frontend instead.
+In my project, I am using PHP for the backend and Vue.js for the frontend to build a more dynamic and interactive user experience. Although this is my first project integrating Vue.js with core PHP, I chose to use Vue.js to enhance frontend functionality.
 
 Additionally, I have followed Object-Oriented Programming (OOP) principles in my backend development. I have also adhered to coding standards by following PHP-FIG PSR-4 Autoloading Standards and maintaining clean code best practices.
 
@@ -7,6 +7,9 @@ This project includes an admin, user, and participant dashboard. Every new user,
 When a user creates a trip, participants can view all available trips and have the option to accept or decline invitations.
 Participants will receive a notification three days before the trip's start date as a reminder.
 Users can view which participants have joined their trips.
+
+
+
 Admins have full visibility over all trips and can see which participants have joined each trip.
 
 
@@ -18,28 +21,26 @@ php -S localhost:8000 -t public
 
 Three types of user accounts are available for testing:
 
-Admin: debnathsunny7852@gmail.com password:123456
+Admin: admin@gmail.com password:123456
 
-User: purnadebosree@gmail.com password:123456
+User: hasan@gmail.com password:123456
 
-Participant: po52211@hartaria.com password:123456
+Participant: mahmudul@gmail.com password:123456
 
 The registration process includes email verification to ensure user authenticity.
 
 
-
------------11-03-2025----------------
+-----------------------------11-03-2025--------------------------
 
 Once a participant accepts a trip, they are restricted from accepting any other trips that overlap with the selected trip’s start and end dates.
 After a trip's end date has passed, it is marked as expired, and no further actions can be taken for that trip.
 
 
+-----------------------------12-03-2025--------------------------
 
------------12-03-2025----------------
+Users can update their profile information, including their name, email,  password, country, city, phone, profile_photo, language, currency, gender.
 
-Users can update their profile information, including their name, email, and password.
-
-Participants can also view the name and email of the user who created each trip, allowing for greater transparency and communication.
+Participants can also view the name,email, country,trip style of the user who created each trip, allowing for greater transparency and communication.
 
 
 -----------15-03-2025------------------
@@ -48,46 +49,37 @@ Participants can also view the name and email of the user who created each trip,
 
 *Once a participant accepts a trip, they can rate and review the places visited during the trip. Participants can also view reviews from other trip participants, helping them make more informed decisions about the trips.
 
-*When a trip's end date has passed, the accepted trip is marked as completed.
+*When a trip's end date is expired, it will automatically disappear after three days. (For example, if today is August 5 and a trip ended on August 2, it will still be visible. On August 6, it will automatically disappear.)
 
 *The total number of participants who have accepted the trip is displayed.
 
+*Participants can also take part in trip-based polls. The poll results highlight the most liked options, offering insights into group preferences and experiences.
 
 
------------16-03-2025------------------
-
-*When a trip's end date is expired, it will automatically disappear after three days. (For example, if today is August 5 and a trip ended on August 2, it will still be visible. On August 6, it will automatically disappear.)
+*Additionally, participants have the ability to follow users, allowing them to stay connected and updated on trips and activities created by those users. They can also view the trip history of the users they follow, including previously created and completed trips.
 
 
-*Participants can update their dashboard profile, including changing their name, email, and password.
+*If a participant declines a trip, it will be moved to the archived trips page for future reference. Additionally, a PayPal payment system has been integrated to provide participants with a secure and convenient payment option.
+
+
+------------------------16-03-2025-----------------------------
+
+*Participants can update their dashboard profile, including changing their name, email,  password, country, city, phone, profile_photo, language, currency, gender.
 
 
 *When a participant makes a payment and the admin accepts it, only then can the participant officially join the trip. Once the payment is confirmed, the trip reminder countdown system starts.
 
-----------------19-03-2025---------------------------
-
-*The admin has the ability to view all payment details made by participants for trips.
-
-
-*****Upcoming Features (Hotel Booking/Flight Booking):****************************
-
-Hotel booking and flight booking functionality is currently under development and will be included in the next update.
 
 
 
 
---------------------------Hotel Booking 19-03-2025---------------------------
-
-The admin can create hotels and hotel rooms. When a user creates accommodation and selects a location, the system dynamically retrieves and displays the available hotel names based on the selected location using AJAX. Upon selecting a hotel, the system will show details such as room types, prices, available rooms, and price per night. The user can then select a room along with the check-in and check-out dates.
-
-Initially, when the user creates accommodation, the status will be marked as "pending." Once the admin confirms the accommodation booking, it will be marked as "booked" by the user. Additionally, the system ensures that the selected check-in and check-out dates are blocked for other users, preventing double bookings for the same dates.
 
 
 
 
------------------------------28-03-2025------------------------
 
-******Future Scope: AI-Based Recommendation System (Exploration Phase)****************
 
-My next concept involves integrating AI-based recommendations. While this feature is currently being explored, it has not yet been implemented in the system.
+
+
+
 
